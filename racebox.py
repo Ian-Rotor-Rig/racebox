@@ -1,6 +1,6 @@
 #from tkinter import *
 from tkinter import ttk, PhotoImage, BOTTOM, X, Tk, Canvas
-from racebox_control import RBControl
+from racebox_control import RBSignalControl
 from datetime import datetime
 
 # Create the main window
@@ -29,7 +29,7 @@ n.add(controlFrame, text='Signal Control')
 n.add(setupFrame, text='Setup')
 
 #add widgets to control frame
-screenControl = RBControl(controlFrame)
+screenControl = RBSignalControl(controlFrame)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
