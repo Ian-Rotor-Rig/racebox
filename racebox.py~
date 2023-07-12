@@ -6,7 +6,7 @@ from datetime import datetime
 # Create the main window
 mainWindow = Tk()
 mainWindow.title('Racebox')
-mainWindow.minsize(width=500, height=500)
+mainWindow.minsize(width=600, height=500)
 
 # window icon
 icon = PhotoImage(file='racebox192.png')
