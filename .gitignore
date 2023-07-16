@@ -1,2 +1,4 @@
 # ignore all python cache files
 *.pyc
+#ignore editor backup files
+*.py~
