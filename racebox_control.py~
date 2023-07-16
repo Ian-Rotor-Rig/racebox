@@ -20,7 +20,7 @@ class RBSignalControl:
 		self.countdownActive = False
 
 		#the start countdown button
-  		#private method 
+  		#private method
 		#tkraise on a frame to show/hide
 		#see #https://www.pythontutorial.net/tkinter/tkraise/
 		#https://coderslegacy.com/python/switching-between-tkinter-frames-with-tkraise/
@@ -37,7 +37,7 @@ class RBSignalControl:
 				startBtn.config(text='Stop Countdown')
 				self.countdownActive = True
 		startBtn = Button(fBtnPanel, text='Start Countdown', command=__countdownStart)
-		startBtn.grid(column=0,row=0,sticky='sw')
+		startBtn.grid(column=0,row=0,sticky='se')
 		fBtnPanel.grid_columnconfigure(0, weight=1)
 		fBtnPanel.grid_rowconfigure(0, weight=1)
   
