@@ -20,6 +20,8 @@ s.configure('Control.TFrame', borderwidth=4, relief='flat')
 s.configure('Setup.TFrame', borderwidth=4, relief='flat')
 s.configure('Footer.TFrame', background='black')
 s.configure('Custom.TNotebook', tabposition='ne', background='darkgrey')
+s.configure('StartTime.TLabel')
+s.configure('StartCount.TLabel')
 
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
