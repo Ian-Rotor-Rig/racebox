@@ -45,7 +45,11 @@ class RBSignalControl:
   
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
-		f.rowconfigure(1, minsize=75)
+		f.rowconfigure(0, minsize=50)
+		f.rowconfigure(1, minsize=50)
+		f.rowconfigure(2, minsize=40)
+		f.rowconfigure(3, minsize=40)
+		f.rowconfigure(4, minsize=40)
 		f.columnconfigure(0, pad=25)
 
 		#next start time label
@@ -98,6 +102,32 @@ class RBSignalControl:
 			anchor=W
 		)
 		lNumberOfStartsValue.grid(column=1,row=2,sticky='w')	
+		
+		#final start time plain label
+		lLastStartTxt = Label(
+			f,
+			text='Final Start Time'
+		)
+		lLastStartTxt.grid(column=0,row=3,sticky='w')		
+		lLastStartValue = Label(
+			f,
+			text='00:00:00',
+			anchor=W
+		)
+		lLastStartValue.grid(column=1,row=3,sticky='w')	
+		
+		#general recall/add start button
+		lAddStartTxt = Label(
+			f,
+			text='General Recall'
+		)
+		lAddStartTxt.grid(column=0,row=4,sticky='w')		
+		lAddStartBtn = Button(
+			f,
+			text='Add Start',
+			anchor=W
+		)
+		lAddStartBtn.grid(column=1,row=4,sticky='w')	
 
 	def __initConfigInterface(self, f: ttk.Frame):
 		# start time
