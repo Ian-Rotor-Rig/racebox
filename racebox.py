@@ -1,6 +1,6 @@
 #from tkinter import *
-from tkinter import (ttk, PhotoImage, Button, messagebox,
-	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S, RIGHT, CENTER)
+from tkinter import (ttk, PhotoImage, Button, messagebox, Frame,
+	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
 from racebox_control import RBSignalControl
 from datetime import datetime
 
@@ -25,7 +25,7 @@ s.configure('StartCount.TLabel')
 
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
-n.pack(expand=True, fill='both') #do not add .pack to the frame creation line
+n.pack(expand=True, fill=BOTH) #do not add .pack to the frame creation line
 signalFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
 setupFrame = ttk.Frame(n, style='Setup.TFrame')   # second page
 n.add(signalFrame, text='Signals')
@@ -39,15 +39,15 @@ footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
 footerFrame.pack(side=BOTTOM, fill=X)
 footerFrame.grid_columnconfigure(0, weight=1)
 footerFrame.grid_columnconfigure(1, weight=1)
-footerFrame.grid_columnconfigure(1, weight=1)
+footerFrame.grid_columnconfigure(2, weight=1)
 
 logoFrame = ttk.Frame(footerFrame, style='Footer.TFrame')
-logoFrame.grid(column=0,row=0,padx=(0,0), sticky='w')
+logoFrame.grid(column=0,row=0,padx=(0,0), sticky=W)
 
 footerCanvas = Canvas(logoFrame, bg="black", bd=0, width=60, height=60, highlightthickness=0)
 footerCanvas.grid(column=0,row=0,padx=(0,0))
 rotorRigLogoSmall = PhotoImage(file='sail50.png')
-footerCanvas.create_image(2,2, anchor='nw', image=rotorRigLogoSmall)
+footerCanvas.create_image(2,2, anchor=NW, image=rotorRigLogoSmall)
 
 rrLabel = ttk.Label(
     logoFrame,
@@ -65,7 +65,7 @@ timeLabel = ttk.Label(
     background='black',
     font=('Monospace', 14, 'bold')
 )
-timeLabel.grid(column=1,row=0,padx=(0,0), sticky=W)
+timeLabel.grid(column=1,row=0,padx=(0,0))
 
 def __hootSound():
 	messagebox.showinfo(title='Test hoot', message='Hoot!')

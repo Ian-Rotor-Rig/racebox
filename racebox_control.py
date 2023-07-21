@@ -1,55 +1,103 @@
 from tkinter import (Button, Frame, Label, Spinbox, StringVar,
-	Variable, ttk, BOTH, X, Y, NW)
+	Variable, ttk, BOTH, X, Y, NW, W)
 
 class RBSignalControl:
+	
 	def __init__(self, fControl: ttk.Frame):
-		#self.fControl = fControl
-
-		#create disposable frames
-		fMain = Frame(fControl)
-		fMain.pack(expand=False, fill=BOTH)
-		fCountdown = Frame(fMain)
-		#fCountdown.forget()
-		fSigConfig = Frame(fMain)
-		fSigConfig.pack(expand=False, fill=BOTH)
-		fBtnPanel = Frame(fControl)
-		fBtnPanel.pack(expand=False, fill=BOTH)
-  
-		self.__initConfigInterface(fSigConfig)
-		self.__initCountdownInterface(fCountdown)  
 
 		self.countdownActive = False
 
-		#the start countdown button
+		#create internal frames
+		fMain = Frame(fControl)
+		fMain.pack(expand=False, fill=BOTH)
+
+		self.fCountdown = Frame(fMain)
+		
+		self.fSigConfig = Frame(fMain)
+		self.fSigConfig.pack(expand=False, fill=BOTH)
+		
+		fBtnPanel = Frame(fControl)
+		fBtnPanel.pack(expand=False, fill=BOTH)
+		
+		self.startBtn = Button(fBtnPanel, text='Start Countdown', command=self.__updateCountdownBtnPanel)
+		self.startBtn.pack(anchor=NW, pady=(40,0))
+  
+		self.__initConfigInterface(self.fSigConfig)
+		self.__initCountdownInterface(self.fCountdown)  
+		
+	#the start countdown button
   		#private method 
-		#tkraise on a frame to show/hide
-		#see #https://www.pythontutorial.net/tkinter/tkraise/
-		#https://coderslegacy.com/python/switching-between-tkinter-frames-with-tkraise/
-		#though just using forget and pack seems to be fine here
-		def __countdownStart():
-			if self.countdownActive:
-				fCountdown.forget()
-				fSigConfig.pack(expand=False, fill=BOTH)
-				startBtn.config(text='Start Countdown')
-				self.countdownActive = False
-			else:
-				fSigConfig.forget()
-				fCountdown.pack(expand=False, fill=BOTH)
-				startBtn.config(text='Stop Countdown')
-				self.countdownActive = True
-				
-		startBtn = Button(fBtnPanel, text='Start Countdown', command=__countdownStart)
-		startBtn.pack(anchor=NW, pady=(25,0))
+	#tkraise on a frame to show/hide
+	#see #https://www.pythontutorial.net/tkinter/tkraise/
+	#https://coderslegacy.com/python/switching-between-tkinter-frames-with-tkraise/
+	#though just using forget and pack seems to be fine here
+	def __updateCountdownBtnPanel (self):
+		if self.countdownActive:
+			self.fCountdown.forget()
+			self.fSigConfig.pack(expand=False, fill=BOTH)
+			self.startBtn.config(text='Start Countdown')
+			self.countdownActive = False
+		else:
+			self.fSigConfig.forget()
+			self.fCountdown.pack(expand=False, fill=BOTH)
+			self.startBtn.config(text='Stop Countdown')
+			self.countdownActive = True
   
 	def __initCountdownInterface(self, f: ttk.Frame):
+		#grid options
+		f.rowconfigure(1, minsize=75)
+		f.columnconfigure(0, pad=25)
+
+		#next start time label
+		lNextStartTxt = Label(
+			f,
+			text='Next Start Time'
+		)
+		lNextStartTxt.grid(column=0,row=0,sticky='w')
+		
 		lNextStartTime = Label(
 			f,
 			text='00:00:00'
 		)
-		lNextStartTime.configure(font='Monospace 14 bold', bg='plum')
-		lNextStartTime.grid(column=0,row=0,sticky='w') #, pady=(15, 0))
-		#and then the time-to-next-start label
-
+		lNextStartTime.configure(
+			font='Monospace 14 bold',
+			bg='plum',
+			padx=12,
+			pady=8
+		)
+		lNextStartTime.grid(column=1,row=0)#,sticky='w')
+		
+		#countdown to next start label
+		lTime2StartTxt = Label(
+			f,
+			text='Time To Start'
+		)
+		lTime2StartTxt.grid(column=0,row=1,sticky='w') #, pady=(50, 0))
+		
+		lTime2Start = Label(
+			f,
+			text='00:00:00'
+		)
+		lTime2Start.configure(
+			font='Monospace 14 bold',
+			bg='orange',
+			padx=12,
+			pady=8
+		)
+		lTime2Start.grid(column=1,row=1)#,sticky='w')
+		
+		#number of starts plain label
+		lNumberOfStartsTxt = Label(
+			f,
+			text='Number Of Starts'
+		)
+		lNumberOfStartsTxt.grid(column=0,row=2,sticky='w')		
+		lNumberOfStartsValue = Label(
+			f,
+			text='0',
+			anchor=W
+		)
+		lNumberOfStartsValue.grid(column=1,row=2,sticky='w')	
 
 	def __initConfigInterface(self, f: ttk.Frame):
 		# start time
@@ -64,7 +112,6 @@ class RBSignalControl:
 		fStartTime = Frame(f)
 		fStartTime.grid(column=0,row=1,sticky='w') 
 		hhDefault = Variable(value='14')
-		#hhEntry = Entry(fStartTime, textvariable=hhDefault)
 		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=hhDefault, state='readonly')
 		hhEntry.pack(side='left')
 		hhEntry.config(width=3)
