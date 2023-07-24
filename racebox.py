@@ -1,8 +1,9 @@
 #from tkinter import *
-from tkinter import (ttk, PhotoImage, Button, messagebox, Frame,
+from tkinter import (TOP, ttk, PhotoImage, Button, messagebox, Frame,
 	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
 from racebox_control import RBSignalControl
 from datetime import datetime
+from racebox_serial import USBRelay
 
 # Create the main window
 mainWindow = Tk()
@@ -22,6 +23,27 @@ s.configure('Footer.TFrame', background='black')
 s.configure('Custom.TNotebook', tabposition='ne', background='darkgrey')
 s.configure('StartTime.TLabel')
 s.configure('StartCount.TLabel')
+
+#USB relay
+raceboxRelay = USBRelay()
+
+#header
+headerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
+headerFrame.pack(side=TOP, fill=X)
+
+headerCanvas = Canvas(headerFrame, bg="black", bd=0, width=75, height=75, highlightthickness=0)
+headerCanvas.grid(column=0,row=0,padx=(0,0), sticky=W)
+rbLogoSmall = PhotoImage(file='racebox72.png')
+headerCanvas.create_image(2,2, anchor=NW, image=rbLogoSmall)
+
+hdrLabel = ttk.Label(
+    headerFrame,
+    text='Racebox',
+    foreground='ghostwhite',
+    background='black',
+    font=('Terminal', 14)
+)
+hdrLabel.grid(column=1,row=0,padx=(0,0))
 
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
@@ -68,8 +90,8 @@ timeLabel = ttk.Label(
 timeLabel.grid(column=1,row=0,padx=(0,0))
 
 def __hootSound():
-	messagebox.showinfo(title='Test hoot', message='Hoot!')
-	#to do
+    #messagebox.showinfo(title='Test hoot', message='Hoot!')
+    raceboxRelay.onoff()
 
 hootBtn = Button(footerFrame, text='Hoot', command=__hootSound)
 hootBtn.grid(column=2,row=0, sticky=E, padx=(0,10))
