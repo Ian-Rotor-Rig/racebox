@@ -1,11 +1,15 @@
 from tkinter import (Button, Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, X, Y, NW, W)
 
-class RBSignalControl:
+from rbsequence import Sequence
+
+class SignalsInterface:
 	
 	def __init__(self, fControl: ttk.Frame):
 
 		self.countdownActive = False
+  
+		self.seq = Sequence()
 
 		#create internal frames
 		fMain = Frame(fControl)
@@ -23,7 +27,7 @@ class RBSignalControl:
 		self.startBtn.pack(anchor=NW, pady=(40,0))
   
 		self.__initConfigInterface(self.fSigConfig)
-		self.__initCountdownInterface(self.fCountdown)  
+		self.__initCountdownInterface(self.fCountdown)
 		
 	#the start countdown button
   		#private method 
@@ -37,11 +41,20 @@ class RBSignalControl:
 			self.fSigConfig.pack(expand=False, fill=BOTH)
 			self.startBtn.config(text='Start Countdown')
 			self.countdownActive = False
+			###stop the countdown
 		else:
 			self.fSigConfig.forget()
 			self.fCountdown.pack(expand=False, fill=BOTH)
 			self.startBtn.config(text='Stop Countdown')
 			self.countdownActive = True
+			###start the countdown
+			sigValues = {
+       			'seqName': self.selectedSequenceName.get(),
+				'starts': self.startsCount.get(),
+				'startHour': self.hhValue.get(),
+				'startMinute': self.mmValue.get()
+          	}
+			self.seq.set(sigValues)
   
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
@@ -69,14 +82,14 @@ class RBSignalControl:
 			padx=12,
 			pady=8
 		)
-		lNextStartTime.grid(column=1,row=0)#,sticky='w')
+		lNextStartTime.grid(column=1,row=0)
 		
 		#countdown to next start label
 		lTime2StartTxt = Label(
 			f,
 			text='Time To Start'
 		)
-		lTime2StartTxt.grid(column=0,row=1,sticky='w') #, pady=(50, 0))
+		lTime2StartTxt.grid(column=0,row=1,sticky='w')
 		
 		lTime2Start = Label(
 			f,
@@ -88,7 +101,7 @@ class RBSignalControl:
 			padx=12,
 			pady=8
 		)
-		lTime2Start.grid(column=1,row=1)#,sticky='w')
+		lTime2Start.grid(column=1,row=1)
 		
 		#number of starts plain label
 		lNumberOfStartsTxt = Label(
@@ -141,12 +154,12 @@ class RBSignalControl:
 	
 		fStartTime = Frame(f)
 		fStartTime.grid(column=0,row=1,sticky='w') 
-		hhDefault = Variable(value='14')
-		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=hhDefault, state='readonly')
+		self.hhValue = Variable(value='14')
+		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhValue, state='readonly')
 		hhEntry.pack(side='left')
 		hhEntry.config(width=3)
-		mmDefault = Variable(value='30')
-		mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=mmDefault, state='readonly')
+		self.mmValue = Variable(value='30')
+		mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmValue, state='readonly')
 		mmEntry.pack(side='left', padx=(4, 0))
 		mmEntry.config(width=3)
 	
@@ -172,8 +185,8 @@ class RBSignalControl:
 		)
 		startsLabel.grid(column=0,row=3,sticky='w', pady=(15, 0))
 	
-		startsDefault = StringVar(value=1)
-		startsEntry = Spinbox(f, from_=1, to=33, textvariable=startsDefault, state='readonly')
+		self.startsCount = StringVar(value=1)
+		startsEntry = Spinbox(f, from_=1, to=33, textvariable=self.startsCount, state='readonly')
 		startsEntry.grid(column=0,row=4,sticky='w')
 		startsEntry.config(width=2)
 	
@@ -184,9 +197,11 @@ class RBSignalControl:
 		)
 		startSigLabel.grid(column=0,row=5,sticky='w', pady=(15, 0))
 	
-		startSigValues = ['10-5-Go', '5-4-1-Go']
-		startSigEntry = ttk.Combobox(f, values=startSigValues, state='readonly')
-		startSigEntry.set(startSigValues[0])
+		startSigValues = self.seq.getSequenceNames()
+		### https://www.pythontutorial.net/tkinter/tkinter-combobox/
+		self.selectedSequenceName = StringVar()
+		startSigEntry = ttk.Combobox(f, values=startSigValues, textvariable=self.selectedSequenceName, state='readonly')
+		self.selectedSequenceName.set(startSigValues[0])
 		startSigEntry.grid(column=0,row=6,sticky='w')
 			
 			

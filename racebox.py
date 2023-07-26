@@ -1,9 +1,9 @@
 #from tkinter import *
 from tkinter import (TOP, ttk, PhotoImage, Button, messagebox, Frame,
 	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
-from racebox_control import RBSignalControl
+from rbsignals import SignalsInterface
 from datetime import datetime
-from racebox_serial import USBRelay
+from rbserial import USBRelay
 
 # Create the main window
 mainWindow = Tk()
@@ -54,7 +54,7 @@ n.add(signalFrame, text='Signals')
 n.add(setupFrame, text='Setup')
 
 #add widgets to control frame
-screenControl = RBSignalControl(signalFrame)
+screenControl = SignalsInterface(signalFrame)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
