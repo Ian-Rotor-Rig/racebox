@@ -38,41 +38,34 @@
 from time import sleep
 import serial
 import threading
+from rbrelayconfig import ch340, defaultDelay
 
 #serial port functionality
-class USBRelay:
-    #drivers
-    ch340 = {
-        'name': 'CH340',
-        'channel':
-            [
-                {'on': b'\xA0\x01\x01\xA2', 'off': b'\xA0\x01\x00\xA1'},
-                {'on': b'\xA0\x02\x01\xA3', 'off': b'\xA0\x02\x00\xA2'},
-                {'on': b'\xA0\x03\x01\xA4', 'off': b'\xA0\x03\x00\xA3'},
-                {'on': b'\xA0\x04\x01\xA5', 'off': b'\xA0\x04\x00\xA4'}
-            ]
-    }
-    
-    defaultDelay = 0.75 #seconds
+class USBSerialRelay:
         	
     def __init__(self):
         self.connection = serial.Serial()
+        self.__open()
         
     def __del__(self):
         self.connection.close()
         
-    def __open(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):
+    def __open(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
+        self.active = True
         if self.connection.is_open: self.connection.close()
         self.connection.baudrate = rate
         self.connection.port = port
         self.driver = driver
-        self.connection.open()
+        try:
+            self.connection.open()
+        except:
+            self.active = False
         
     def __close(self):
         self.connection.close()
         
-    def configurePort(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):
-        self.__open(self, port, rate, driver)
+    def configurePort(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
+        self.__open(self, driver, port, rate)
         
     def isOpen(self):
         return self.connection.is_open

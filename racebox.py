@@ -3,7 +3,8 @@ from tkinter import (TOP, ttk, PhotoImage, Button, messagebox, Frame,
 	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
 from rbsignals import SignalsInterface
 from datetime import datetime
-from rbserial import USBRelay
+from rbserial import USBSerialRelay
+from rbhid import USBHIDRelay
 
 # Create the main window
 mainWindow = Tk()
@@ -25,7 +26,9 @@ s.configure('StartTime.TLabel')
 s.configure('StartCount.TLabel')
 
 #USB relay
-raceboxRelay = USBRelay()
+raceboxRelay = USBHIDRelay()
+if not raceboxRelay.active: raceboxRelay = USBSerialRelay()
+if not raceboxRelay.active: print('no USB relay found')
 
 #header
 headerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
