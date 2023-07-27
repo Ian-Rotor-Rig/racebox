@@ -18,19 +18,26 @@ These relays quite often have the "Songle" name on the components
 The 1, 2 and 4 channel relays should work. It is not too hard to extend the\
 code in rbserial.py or rbhid.py to support other relays if you have the instruction set.
 
-# Required software for serial devices
+## Required software for serial devices
 pyserial - in Ubuntu - sudo apt install python3-serial\
 pip3 install pyserial
 
-# Required software for HID devices
+The braille display kernel module prevents these serial devices working correctly\
+and should be removed. This is caused by a conflict between product ids
+
+sudo apt remove brltty
+
+## Required software for HID devices
 hid - in Ubuntu - sudo apt install python3-hid\
 pip3 install hid
 
-# Ubuntu groups
+## Ubuntu groups
 To work on Linux the user must be in the dialout group\
 (some docs suggest plugdev)
 
-# HID Relay Miscellaneous Information
+sudo usermod -a -G dialout myusername
+
+## HID Relay Miscellaneous Information
 
 The python-hidapi is one way to address HID relays\
 
