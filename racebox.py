@@ -99,17 +99,15 @@ def __hootSound():
 hootBtn = Button(footerFrame, text='Hoot', command=__hootSound)
 hootBtn.grid(column=2,row=0, sticky=E, padx=(0,10))
 
-def loop():
+def clockLoop():
     #time
     now = datetime.now()
     nowText = now.strftime('%H:%M:%S')
-    timeLabel.config(text=nowText)
-        
-    # Schedule a call to `loop` in 500 milliseconds with t+1 as a parameter
-    mainWindow.after(300, loop)
+    timeLabel.config(text=nowText)       
+    mainWindow.after(1000, clockLoop)
 
 # Start the timing loop
-loop()
+clockLoop()
 
 # Run forever!
 mainWindow.mainloop()

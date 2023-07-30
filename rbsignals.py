@@ -1,15 +1,22 @@
+from datetime import datetime, time, timedelta
+import json
 from tkinter import (Button, Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, X, Y, NW, W)
 
-from rbsequence import Sequence
+#from rbcountdown import Countdown
 
 class SignalsInterface:
+	sequenceList = [
+        {'name': '10-5-Go', 'interval': 5, 'warning': [-10,-5]},
+        {'name': '5-4-1-Go', 'interval': 5, 'warning': [-5,-4,-1]},
+        {'name': '3-2-1-Go', 'interval': 3, 'warning': [-3,-2,-1]}
+    ]
 	
 	def __init__(self, fControl: ttk.Frame):
 
 		self.countdownActive = False
   
-		self.seq = Sequence()
+		#self.count = Countdown(fControl)
 
 		#create internal frames
 		fMain = Frame(fControl)
@@ -48,13 +55,36 @@ class SignalsInterface:
 			self.startBtn.config(text='Stop Countdown')
 			self.countdownActive = True
 			###start the countdown
-			sigValues = {
-       			'seqName': self.selectedSequenceName.get(),
+			signalsConfig = {
+       			'name': self.selectedSequenceName.get(),
 				'starts': self.startsCount.get(),
 				'startHour': self.hhValue.get(),
 				'startMinute': self.mmValue.get()
           	}
-			self.seq.set(sigValues)
+			self.__getSignalList(signalsConfig)
+   
+   
+	def __getSignalList(self, config):
+		print(config)
+		sequenceIndex = -1
+		for sequenceIndex, item in enumerate(SignalsInterface.sequenceList):
+			if item['name'] == config['name']: break
+		if sequenceIndex == -1: return []
+		print('selected sequence ' + json.dumps(SignalsInterface.sequenceList[sequenceIndex]))
+		signalList = []
+		now = datetime.now()
+		print(now)
+		firstStart = now.replace(hour=14,minute=30,second=0, microsecond=0)
+		firstWarning = firstStart - timedelta(minutes=5)
+		print(firstStart)
+		print(firstWarning)
+  		#
+		# loop through the warnings and add to array
+  		# then add first start
+		# if more than one start the parent loop then does the same
+  		# for each subesuent start
+		# we need separate arrays for starts and all signals OR
+		# use a dict to show which signal is a start and which is a warning
   
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
@@ -163,21 +193,6 @@ class SignalsInterface:
 		mmEntry.pack(side='left', padx=(4, 0))
 		mmEntry.config(width=3)
 	
-		# day context selector
-		#fDayCtx = Frame(f, padx=10, pady=10)
-		#fDayCtx.grid(column=0,row=2,sticky='w')
-		#vDayCtx = IntVar()
-		#vDayCtx.set(0)
-		#vDayCtxValues = (('Today', 0), ('Tomorrow', 1), ('Now', 2))
-		#for v in vDayCtxValues:
-	#		r = Radiobutton(
-	#    	fDayCtx,
-	#		text=v[0],
-	#		variable=vDayCtx,
-	#		value=v[1]
-	#   	)
-	#		r.pack(side='left')
-	#	
 		# number of starts
 		startsLabel = Label(
 			f,
@@ -196,14 +211,12 @@ class SignalsInterface:
 			text='Start Sequence'
 		)
 		startSigLabel.grid(column=0,row=5,sticky='w', pady=(15, 0))
-	
-		startSigValues = self.seq.getSequenceNames()
+  
+		sequenceNames = []
+		for s in SignalsInterface.sequenceList: sequenceNames.append(s['name'])
 		### https://www.pythontutorial.net/tkinter/tkinter-combobox/
 		self.selectedSequenceName = StringVar()
-		startSigEntry = ttk.Combobox(f, values=startSigValues, textvariable=self.selectedSequenceName, state='readonly')
-		self.selectedSequenceName.set(startSigValues[0])
-		startSigEntry.grid(column=0,row=6,sticky='w')
-			
-			
-			
+		startSigEntry = ttk.Combobox(f, values=sequenceNames, textvariable=self.selectedSequenceName, state='readonly')
+		self.selectedSequenceName.set(sequenceNames[0])
+		startSigEntry.grid(column=0,row=6,sticky='w')			
 			
