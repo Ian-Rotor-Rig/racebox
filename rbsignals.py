@@ -57,27 +57,28 @@ class SignalsInterface:
 			###start the countdown
 			signalsConfig = {
        			'name': self.selectedSequenceName.get(),
-				'starts': self.startsCount.get(),
-				'startHour': self.hhValue.get(),
-				'startMinute': self.mmValue.get()
+				'starts': int(self.startsCount.get()),
+				'startHour': int(self.hhValue.get()),
+				'startMinute': int(self.mmValue.get())
           	}
 			self.__getSignalList(signalsConfig)
    
    
 	def __getSignalList(self, config):
-		print(config)
+		# print(config)
 		sequenceIndex = -1
 		for sequenceIndex, item in enumerate(SignalsInterface.sequenceList):
 			if item['name'] == config['name']: break
 		if sequenceIndex == -1: return []
-		print('selected sequence ' + json.dumps(SignalsInterface.sequenceList[sequenceIndex]))
+		# print('selected sequence ' + json.dumps(SignalsInterface.sequenceList[sequenceIndex]))
 		signalList = []
+		startList = []
 		now = datetime.now()
-		print(now)
-		firstStart = now.replace(hour=14,minute=30,second=0, microsecond=0)
-		firstWarning = firstStart - timedelta(minutes=5)
-		print(firstStart)
-		print(firstWarning)
+		# print(now)
+		firstStart = now.replace(hour=config['startHour'], minute=config['startMinute'], second=0, microsecond=0)
+		#firstWarning = firstStart - timedelta(minutes=5)
+		#print(firstStart)
+		#print(firstWarning)
   		#
 		# loop through the warnings and add to array
   		# then add first start
@@ -85,6 +86,28 @@ class SignalsInterface:
   		# for each subesuent start
 		# we need separate arrays for starts and all signals OR
 		# use a dict to show which signal is a start and which is a warning
+		#
+		currentStart = firstStart
+		startInterval = SignalsInterface.sequenceList[sequenceIndex]['interval']
+		for start in range(config['starts']):
+			for warning in SignalsInterface.sequenceList[sequenceIndex]['warning']:
+				warningTime = currentStart - timedelta(minutes=abs(warning))
+				if warningTime not in signalList: signalList.append(warningTime)
+			if currentStart not in signalList:
+				signalList.append(currentStart)
+				startList.append(currentStart)
+			currentStart = currentStart + timedelta(minutes=startInterval)
+    
+		# print('signals ', signalList)
+		# print('starts', startList)
+		# when removing signals - can check to see if the signal being removed is also in starts and remove it from there too
+
+		return [signalList, startList]
+
+		# unpack like this: [signals, starts] = getSignalList(config)
+		# the js rest operator ... is * in Python
+		# so the first/last start would be [firstStart, *otherStarts, lastStart] = starts 
+      
   
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
