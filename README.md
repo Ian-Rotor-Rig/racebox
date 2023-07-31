@@ -14,7 +14,7 @@ These relays quite often have the "Songle" name on the components
 ![USB relay](https://github.com/Ian-Rotor-Rig/racebox/assets/90469594/fbae9351-5044-4e16-924e-9634cf990999)
 
 The 1, 2 and 4 channel relays should work. It is not too hard to extend the\
-code in rbserial.py or rbhid.py to support other relays if you have the instruction set.
+code in rbrelayconfig.py to support other relays if you have the instruction set.
 
 ## Required software for serial devices
 pyserial - in Ubuntu - sudo apt install python3-serial\

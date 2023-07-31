@@ -6,7 +6,6 @@ from rbrelayconfig import hid16c0, defaultDelay
 class USBHIDRelay:
         	
     def __init__(self, driver=hid16c0):
-        self.active = False
         try:
             #print('opening HID device')
             #print(hid.enumerate())
@@ -16,7 +15,8 @@ class USBHIDRelay:
             self.active = True
             
         except:
-            print('could not open HID device')
+            self.active = False
+            # print('could not open HID device')
             
     def __del__(self):
         pass

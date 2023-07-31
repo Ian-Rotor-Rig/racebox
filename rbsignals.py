@@ -61,7 +61,9 @@ class SignalsInterface:
 				'startHour': int(self.hhValue.get()),
 				'startMinute': int(self.mmValue.get())
           	}
-			self.__getSignalList(signalsConfig)
+			[signals, starts] = self.__getSignalList(signalsConfig)
+			print('signals: ', signals)
+			print('starts: ', starts)
    
    
 	def __getSignalList(self, config):
