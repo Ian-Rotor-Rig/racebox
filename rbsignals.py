@@ -15,8 +15,6 @@ class SignalsInterface:
 	def __init__(self, fControl: ttk.Frame):
 
 		self.countdownActive = False
-  
-		#self.count = Countdown(fControl)
 
 		#create internal frames
 		fMain = Frame(fControl)
@@ -30,7 +28,7 @@ class SignalsInterface:
 		fBtnPanel = Frame(fControl)
 		fBtnPanel.pack(expand=False, fill=BOTH)
 		
-		self.startBtn = Button(fBtnPanel, text='Start Countdown', command=self.__updateCountdownBtnPanel)
+		self.startBtn = Button(fBtnPanel, text='Start Countdown', command=self.__changeCountdownStatus)
 		self.startBtn.pack(anchor=NW, pady=(40,0))
   
 		self.__initConfigInterface(self.fSigConfig)
@@ -42,29 +40,46 @@ class SignalsInterface:
 	#see #https://www.pythontutorial.net/tkinter/tkraise/
 	#https://coderslegacy.com/python/switching-between-tkinter-frames-with-tkraise/
 	#though just using forget and pack seems to be fine here
-	def __updateCountdownBtnPanel (self):
+	def __updateCountdownBtnPanel(self):
 		if self.countdownActive:
-			self.fCountdown.forget()
-			self.fSigConfig.pack(expand=False, fill=BOTH)
-			self.startBtn.config(text='Start Countdown')
-			self.countdownActive = False
-			###stop the countdown
-		else:
 			self.fSigConfig.forget()
 			self.fCountdown.pack(expand=False, fill=BOTH)
 			self.startBtn.config(text='Stop Countdown')
-			self.countdownActive = True
-			###start the countdown
-			signalsConfig = {
-       			'name': self.selectedSequenceName.get(),
-				'starts': int(self.startsCount.get()),
-				'startHour': int(self.hhValue.get()),
-				'startMinute': int(self.mmValue.get())
-          	}
-			[signals, starts] = self.__getSignalList(signalsConfig)
-			print('signals: ', signals)
-			print('starts: ', starts)
+		else:
+			self.fCountdown.forget()
+			self.fSigConfig.pack(expand=False, fill=BOTH)
+			self.startBtn.config(text='Start Countdown')
    
+	def __changeCountdownStatus(self):
+		if self.countdownActive: self.__stopCountdown()
+		else: self.__startCountdown()
+   
+	def __startCountdown(self):
+		self.countdownActive = True
+		self.__countdown()
+		self.__updateCountdownBtnPanel()
+   
+	def __stopCountdown(self):
+		self.countdownActive = False
+		self.__updateCountdownBtnPanel()
+  
+	def __countdown(self):
+		signalsConfig = {
+			'name': self.selectedSequenceName.get(),
+			'starts': int(self.startsCount.get()),
+			'startHour': int(self.hhValue.get()),
+			'startMinute': int(self.mmValue.get())
+        }
+		[signals, starts] = self.__getSignalList(signalsConfig)
+		print('countdown start')
+		print('signals: ', signals)
+		print('starts: ', starts)
+		self.__countdownLoop()
+   
+	def __countdownLoop(self):
+		if not self.countdownActive: return
+		print('countdown active')
+		self.fCountdown.after(1000, self.__countdownLoop)
    
 	def __getSignalList(self, config):
 		# print(config)
