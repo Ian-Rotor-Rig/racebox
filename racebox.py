@@ -57,7 +57,7 @@ n.add(signalFrame, text='Signals')
 n.add(setupFrame, text='Setup')
 
 #add widgets to control frame
-screenControl = SignalsInterface(signalFrame)
+screenControl = SignalsInterface(signalFrame, raceboxRelay)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')

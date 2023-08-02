@@ -38,7 +38,9 @@
 from time import sleep
 import serial
 import threading
-from rbrelayconfig import ch340, defaultDelay
+from rbrelayconfig import ch340
+from rbconfig import defaultOn2Off
+
 
 #serial port functionality
 class USBSerialRelay:
@@ -83,6 +85,6 @@ class USBSerialRelay:
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['off'])
         self.__close()
 
-    def onoff(self, ch=0, delay=defaultDelay):
+    def onoff(self, ch=0, delay=defaultOn2Off):
         t = threading.Thread(target=self.__tOnOff, args=(ch,delay))
         t.start()

@@ -21,4 +21,3 @@ hid16c0 = {
     }
 # https://slomkowski.eu/tutorials/eavesdropping-usb-and-writing-driver-in-python/
 
-defaultDelay = 0.75 #seconds

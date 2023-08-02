@@ -1,9 +1,8 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 import json
 from tkinter import (Button, Frame, Label, Spinbox, StringVar,
-	Variable, ttk, BOTH, X, Y, NW, W)
-
-#from rbcountdown import Countdown
+	Variable, ttk, BOTH, NW, W)
+from rbconfig import defaultSequence
 
 class SignalsInterface:
 	sequenceList = [
@@ -11,10 +10,16 @@ class SignalsInterface:
         {'name': '5-4-1-Go', 'interval': 5, 'warning': [-5,-4,-1]},
         {'name': '3-2-1-Go', 'interval': 3, 'warning': [-3,-2,-1]}
     ]
+ 
+	SIGNAL_OLD = 1
+	SIGNAL_NOW = 0
+	SIGNAL_FUTURE = -1
+	SIGNAL_MAX_AGE = 1500 #ms
 	
-	def __init__(self, fControl: ttk.Frame):
+	def __init__(self, fControl: ttk.Frame, relay):
 
 		self.countdownActive = False
+		self.relay = relay
 
 		#create internal frames
 		fMain = Frame(fControl)
@@ -64,6 +69,7 @@ class SignalsInterface:
 		self.__updateCountdownBtnPanel()
   
 	def __countdown(self):
+		if not self.relay.active: print('no active relay')
 		signalsConfig = {
 			'name': self.selectedSequenceName.get(),
 			'starts': int(self.startsCount.get()),
@@ -71,15 +77,33 @@ class SignalsInterface:
 			'startMinute': int(self.mmValue.get())
         }
 		[signals, starts] = self.__getSignalList(signalsConfig)
-		print('countdown start')
-		print('signals: ', signals)
-		print('starts: ', starts)
-		self.__countdownLoop()
+		#print('countdown start')
+		#print('signals: ', signals)
+		#print('starts: ', starts)
+		self.__countdownLoop(signals, starts, len(starts), signalsConfig['name'])
    
-	def __countdownLoop(self):
+	def __countdownLoop(self, signals, starts, startCount, seqName):
 		if not self.countdownActive: return
-		print('countdown active')
-		self.fCountdown.after(1000, self.__countdownLoop)
+		if len(signals) < 1: return
+		#print('countdown active')
+		tooLate = signals[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
+		chk = self.__checkNextSignal(signals[0], tooLate)
+		if chk == SignalsInterface.SIGNAL_NOW:
+			self.relay.onoff()
+		#print(chk, signals[0])
+		if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
+			if signals[0] == starts[0]: starts.pop(0)
+			rm = signals.pop(0)
+			#print('removed ', rm)
+		self.__updateCountdownDisplay(signals, starts, startCount, seqName)
+		self.fCountdown.after(500, self.__countdownLoop, signals, starts, startCount, seqName)
+  
+	def __checkNextSignal(self, signal, tooLate):
+		#print('check if signal is due')
+		now = datetime.now()
+		if now >= tooLate: return SignalsInterface.SIGNAL_OLD
+		if signal < now < tooLate: return SignalsInterface.SIGNAL_NOW
+		return SignalsInterface.SIGNAL_FUTURE
    
 	def __getSignalList(self, config):
 		# print(config)
@@ -124,8 +148,26 @@ class SignalsInterface:
 		# unpack like this: [signals, starts] = getSignalList(config)
 		# the js rest operator ... is * in Python
 		# so the first/last start would be [firstStart, *otherStarts, lastStart] = starts 
+
+	def __updateCountdownDisplay(self, signals, starts, startCount, seqName):
+		self.lNumberOfStartsValue.config(text=startCount)
+		if len(signals) < 1:
+			self.lTime2Start.config(text='00:00:00')
+			self.lNextStartTime.config(text='00:00:00')
+			self.lLastStartValue.config(text='00:00:00')
+			return
+		self.lNextStartTime.config(text="{:%H:%M:%S}".format(starts[0]))
+		self.lLastStartValue.config(text="{:%H:%M:%S}".format(starts[-1]))
+		now = datetime.now()
+		if now < starts[0]:
+			time2Start = starts[0] - now
+			t2Shours, remainder = divmod(time2Start.total_seconds(), 3600)
+			t2Sminutes, t2Sseconds = divmod(remainder, 60)
+			self.lTime2Start.config(text='{:02}:{:02}:{:02}'.format(int(t2Shours), int(t2Sminutes), int(t2Sseconds)))
+		else:
+			self.lTime2Start.config(text='00:00:00')
+		self.lSequenceValue.config(text=seqName)
       
-  
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
 		f.rowconfigure(0, minsize=50)
@@ -142,17 +184,17 @@ class SignalsInterface:
 		)
 		lNextStartTxt.grid(column=0,row=0,sticky='w')
 		
-		lNextStartTime = Label(
+		self.lNextStartTime = Label(
 			f,
 			text='00:00:00'
 		)
-		lNextStartTime.configure(
+		self.lNextStartTime.configure(
 			font='Monospace 14 bold',
 			bg='plum',
 			padx=12,
 			pady=8
 		)
-		lNextStartTime.grid(column=1,row=0)
+		self.lNextStartTime.grid(column=1,row=0)
 		
 		#countdown to next start label
 		lTime2StartTxt = Label(
@@ -161,17 +203,17 @@ class SignalsInterface:
 		)
 		lTime2StartTxt.grid(column=0,row=1,sticky='w')
 		
-		lTime2Start = Label(
+		self.lTime2Start = Label(
 			f,
 			text='00:00:00'
 		)
-		lTime2Start.configure(
+		self.lTime2Start.configure(
 			font='Monospace 14 bold',
 			bg='orange',
 			padx=12,
 			pady=8
 		)
-		lTime2Start.grid(column=1,row=1)
+		self.lTime2Start.grid(column=1,row=1)
 		
 		#number of starts plain label
 		lNumberOfStartsTxt = Label(
@@ -179,12 +221,12 @@ class SignalsInterface:
 			text='Number Of Starts'
 		)
 		lNumberOfStartsTxt.grid(column=0,row=2,sticky='w')		
-		lNumberOfStartsValue = Label(
+		self.lNumberOfStartsValue = Label(
 			f,
 			text='0',
 			anchor=W
 		)
-		lNumberOfStartsValue.grid(column=1,row=2,sticky='w')	
+		self.lNumberOfStartsValue.grid(column=1,row=2,sticky='w')	
 		
 		#final start time plain label
 		lLastStartTxt = Label(
@@ -192,25 +234,38 @@ class SignalsInterface:
 			text='Final Start Time'
 		)
 		lLastStartTxt.grid(column=0,row=3,sticky='w')		
-		lLastStartValue = Label(
+		self.lLastStartValue = Label(
 			f,
 			text='00:00:00',
 			anchor=W
 		)
-		lLastStartValue.grid(column=1,row=3,sticky='w')	
+		self.lLastStartValue.grid(column=1,row=3,sticky='w')	
+  
+		#start sequence
+		lSequenceTxt = Label(
+			f,
+			text='Sequence'
+		)
+		lSequenceTxt.grid(column=0,row=4,sticky='w')		
+		self.lSequenceValue = Label(
+			f,
+			text='',
+			anchor=W
+		)
+		self.lSequenceValue.grid(column=1,row=4,sticky='w')	  
 		
 		#general recall/add start button
 		lAddStartTxt = Label(
 			f,
 			text='General Recall'
 		)
-		lAddStartTxt.grid(column=0,row=4,sticky='w')		
+		lAddStartTxt.grid(column=0,row=5,sticky='w')		
 		lAddStartBtn = Button(
 			f,
 			text='Add Start',
 			anchor=W
 		)
-		lAddStartBtn.grid(column=1,row=4,sticky='w')	
+		lAddStartBtn.grid(column=1,row=5,sticky='w')	
 
 	def __initConfigInterface(self, f: ttk.Frame):
 		# start time
@@ -225,11 +280,11 @@ class SignalsInterface:
 		fStartTime = Frame(f)
 		fStartTime.grid(column=0,row=1,sticky='w') 
 		self.hhValue = Variable(value='14')
-		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhValue, state='readonly')
+		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhValue, format="%02.0f", state='readonly')
 		hhEntry.pack(side='left')
 		hhEntry.config(width=3)
 		self.mmValue = Variable(value='30')
-		mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmValue, state='readonly')
+		mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmValue, format="%02.0f", state='readonly')
 		mmEntry.pack(side='left', padx=(4, 0))
 		mmEntry.config(width=3)
 	
@@ -257,6 +312,6 @@ class SignalsInterface:
 		### https://www.pythontutorial.net/tkinter/tkinter-combobox/
 		self.selectedSequenceName = StringVar()
 		startSigEntry = ttk.Combobox(f, values=sequenceNames, textvariable=self.selectedSequenceName, state='readonly')
-		self.selectedSequenceName.set(sequenceNames[0])
+		self.selectedSequenceName.set(sequenceNames[defaultSequence])
 		startSigEntry.grid(column=0,row=6,sticky='w')			
 			
