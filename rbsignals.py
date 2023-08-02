@@ -160,7 +160,7 @@ class SignalsInterface:
 		self.lLastStartValue.config(text="{:%H:%M:%S}".format(starts[-1]))
 		now = datetime.now()
 		if now < starts[0]:
-			time2Start = starts[0] - now
+			time2Start = starts[0] + timedelta(seconds=1) - now
 			t2Shours, remainder = divmod(time2Start.total_seconds(), 3600)
 			t2Sminutes, t2Sseconds = divmod(remainder, 60)
 			self.lTime2Start.config(text='{:02}:{:02}:{:02}'.format(int(t2Shours), int(t2Sminutes), int(t2Sseconds)))
