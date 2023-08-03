@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 from tkinter import (Button, Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, NW, W)
 from rbconfig import defaultSequence
@@ -14,7 +13,8 @@ class SignalsInterface:
 	SIGNAL_OLD = 1
 	SIGNAL_NOW = 0
 	SIGNAL_FUTURE = -1
-	SIGNAL_MAX_AGE = 1500 #ms
+	SIGNAL_MAX_AGE = 1500 #ms beyond this a signal is too late to be used
+	COUNTDOWN_PRECISION = 500 #ms
 	
 	def __init__(self, fControl: ttk.Frame, relay):
 
@@ -39,12 +39,6 @@ class SignalsInterface:
 		self.__initConfigInterface(self.fSigConfig)
 		self.__initCountdownInterface(self.fCountdown)
 		
-	#the start countdown button
-  		#private method 
-	#tkraise on a frame to show/hide
-	#see #https://www.pythontutorial.net/tkinter/tkraise/
-	#https://coderslegacy.com/python/switching-between-tkinter-frames-with-tkraise/
-	#though just using forget and pack seems to be fine here
 	def __updateCountdownBtnPanel(self):
 		if self.countdownActive:
 			self.fSigConfig.forget()
@@ -61,6 +55,7 @@ class SignalsInterface:
    
 	def __startCountdown(self):
 		self.countdownActive = True
+		self.configChange = False
 		self.__countdown()
 		self.__updateCountdownBtnPanel()
    
@@ -70,64 +65,51 @@ class SignalsInterface:
   
 	def __countdown(self):
 		if not self.relay.active: print('no active relay')
-		signalsConfig = {
+		signalsConfig = self.__getSignalsConfig()
+		[signals, starts] = self.__getSignalList(signalsConfig)
+		self.__countdownLoop(signals, starts, len(starts), signalsConfig['name'])
+   
+	def __countdownLoop(self, signals, starts, startCount, seqName):
+		if not self.countdownActive: return
+		if len(signals) > 0:
+			tooLate = signals[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
+			chk = self.__checkNextSignal(signals[0], tooLate)
+			if chk == SignalsInterface.SIGNAL_NOW:
+				self.relay.onoff()
+			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
+				if signals[0] == starts[0]: starts.pop(0)
+				rm = signals.pop(0)
+		if self.configChange:
+			signalsConfig = self.__getSignalsConfig()
+			[signals, starts] = self.__getSignalList(signalsConfig)		
+			startCount = len(starts)	
+			self.configChange = False		
+		self.__updateCountdownDisplay(signals, starts, startCount, seqName)
+		self.fCountdown.after(SignalsInterface.COUNTDOWN_PRECISION, self.__countdownLoop, signals, starts, startCount, seqName)
+  
+	def __checkNextSignal(self, signal, tooLate):
+		now = datetime.now()
+		if now >= tooLate: return SignalsInterface.SIGNAL_OLD
+		if signal < now < tooLate: return SignalsInterface.SIGNAL_NOW
+		return SignalsInterface.SIGNAL_FUTURE
+
+	def __getSignalsConfig(self):
+		return {
 			'name': self.selectedSequenceName.get(),
 			'starts': int(self.startsCount.get()),
 			'startHour': int(self.hhValue.get()),
 			'startMinute': int(self.mmValue.get())
         }
-		[signals, starts] = self.__getSignalList(signalsConfig)
-		#print('countdown start')
-		#print('signals: ', signals)
-		#print('starts: ', starts)
-		self.__countdownLoop(signals, starts, len(starts), signalsConfig['name'])
-   
-	def __countdownLoop(self, signals, starts, startCount, seqName):
-		if not self.countdownActive: return
-		if len(signals) < 1: return
-		#print('countdown active')
-		tooLate = signals[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
-		chk = self.__checkNextSignal(signals[0], tooLate)
-		if chk == SignalsInterface.SIGNAL_NOW:
-			self.relay.onoff()
-		#print(chk, signals[0])
-		if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
-			if signals[0] == starts[0]: starts.pop(0)
-			rm = signals.pop(0)
-			#print('removed ', rm)
-		self.__updateCountdownDisplay(signals, starts, startCount, seqName)
-		self.fCountdown.after(500, self.__countdownLoop, signals, starts, startCount, seqName)
-  
-	def __checkNextSignal(self, signal, tooLate):
-		#print('check if signal is due')
-		now = datetime.now()
-		if now >= tooLate: return SignalsInterface.SIGNAL_OLD
-		if signal < now < tooLate: return SignalsInterface.SIGNAL_NOW
-		return SignalsInterface.SIGNAL_FUTURE
    
 	def __getSignalList(self, config):
-		# print(config)
 		sequenceIndex = -1
 		for sequenceIndex, item in enumerate(SignalsInterface.sequenceList):
 			if item['name'] == config['name']: break
 		if sequenceIndex == -1: return []
-		# print('selected sequence ' + json.dumps(SignalsInterface.sequenceList[sequenceIndex]))
 		signalList = []
 		startList = []
 		now = datetime.now()
-		# print(now)
 		firstStart = now.replace(hour=config['startHour'], minute=config['startMinute'], second=0, microsecond=0)
-		#firstWarning = firstStart - timedelta(minutes=5)
-		#print(firstStart)
-		#print(firstWarning)
-  		#
-		# loop through the warnings and add to array
-  		# then add first start
-		# if more than one start the parent loop then does the same
-  		# for each subesuent start
-		# we need separate arrays for starts and all signals OR
-		# use a dict to show which signal is a start and which is a warning
-		#
 		currentStart = firstStart
 		startInterval = SignalsInterface.sequenceList[sequenceIndex]['interval']
 		for start in range(config['starts']):
@@ -138,11 +120,6 @@ class SignalsInterface:
 				signalList.append(currentStart)
 				startList.append(currentStart)
 			currentStart = currentStart + timedelta(minutes=startInterval)
-    
-		# print('signals ', signalList)
-		# print('starts', startList)
-		# when removing signals - can check to see if the signal being removed is also in starts and remove it from there too
-
 		return [signalList, startList]
 
 		# unpack like this: [signals, starts] = getSignalList(config)
@@ -167,6 +144,11 @@ class SignalsInterface:
 		else:
 			self.lTime2Start.config(text='00:00:00')
 		self.lSequenceValue.config(text=seqName)
+  
+	def __addStart(self):
+		currentStarts = int(self.startsCount.get())
+		self.startsCount.set(str(currentStarts+1))
+		self.configChange = True
       
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
@@ -263,6 +245,7 @@ class SignalsInterface:
 		lAddStartBtn = Button(
 			f,
 			text='Add Start',
+   			command=self.__addStart,
 			anchor=W
 		)
 		lAddStartBtn.grid(column=1,row=5,sticky='w')	
