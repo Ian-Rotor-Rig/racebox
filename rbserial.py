@@ -39,7 +39,7 @@ from time import sleep
 import serial
 import threading
 from rbrelayconfig import ch340
-from rbconfig import defaultOn2Off
+from rbconfig import defaultOn2Off, serialRelayPort
 
 
 #serial port functionality
@@ -52,7 +52,7 @@ class USBSerialRelay:
     def __del__(self):
         self.connection.close()
         
-    def __open(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
+    def __open(self, driver=ch340, port=serialRelayPort, rate=9600):
         self.active = True
         if self.connection.is_open: self.connection.close()
         self.connection.baudrate = rate
