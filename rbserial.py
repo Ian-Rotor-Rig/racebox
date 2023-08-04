@@ -78,13 +78,13 @@ class USBSerialRelay:
     def off(self, ch=0):
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['off'])
         
-    def __tOnOff(self, ch, delay):
+    def __tOnOff(self, delay, ch):
         self.__open()
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['on'])
         sleep(delay)
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['off'])
         self.__close()
 
-    def onoff(self, ch=0, delay=defaultOn2Off):
-        t = threading.Thread(target=self.__tOnOff, args=(ch,delay))
+    def onoff(self, delay=defaultOn2Off, ch=0):
+        t = threading.Thread(target=self.__tOnOff, args=(delay, ch))
         t.start()

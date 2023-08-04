@@ -6,13 +6,13 @@ from rbconfig import defaultSequence
 class SignalsInterface:
 	sequenceList = [
         {'name': '10-5-Go', 'interval': 5, 'warning': [-10,-5]},
-        {'name': '5-4-1-Go', 'interval': 5, 'warning': [-5,-4,-1]},
-        {'name': '3-2-1-Go', 'interval': 3, 'warning': [-3,-2,-1]}
+        {'name': '5-4-1-Go', 'interval': 5, 'warning': [-5,-4,-1]}
     ]
- 
+	#signal status definitions
 	SIGNAL_OLD = 1
 	SIGNAL_NOW = 0
 	SIGNAL_FUTURE = -1
+ 
 	SIGNAL_MAX_AGE = 1500 #ms beyond this a signal is too late to be used
 	COUNTDOWN_PRECISION = 500 #ms
 	

@@ -1,6 +1,7 @@
 #from tkinter import *
-from tkinter import (TOP, ttk, PhotoImage, Button, messagebox, Frame,
+from tkinter import (TOP, font, ttk, PhotoImage, Button, messagebox, Frame,
 	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
+from rbfinishtimes import FinishTimesInterface
 from rbsignals import SignalsInterface
 from datetime import datetime
 from rbserial import USBSerialRelay
@@ -9,7 +10,11 @@ from rbhid import USBHIDRelay
 # Create the main window
 mainWindow = Tk()
 mainWindow.title('Racebox')
-mainWindow.minsize(width=500, height=500)
+mainWindow.minsize(width=600, height=500)
+
+#default font
+default_font = font.nametofont("TkDefaultFont")
+default_font.configure(size=12)
 
 # window icon
 icon = PhotoImage(file='racebox192.png')
@@ -32,8 +37,6 @@ if not raceboxRelay.active: print('no USB relay found')
 
 #header
 headerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
-headerFrame.pack(side=TOP, fill=X)
-
 headerCanvas = Canvas(headerFrame, bg="black", bd=0, width=75, height=75, highlightthickness=0)
 headerCanvas.grid(column=0,row=0,padx=(0,0), sticky=W)
 rbLogoSmall = PhotoImage(file='racebox72.png')
@@ -50,18 +53,17 @@ hdrLabel.grid(column=1,row=0,padx=(0,0))
 
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
-n.pack(expand=True, fill=BOTH) #do not add .pack to the frame creation line
-signalFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
-setupFrame = ttk.Frame(n, style='Setup.TFrame')   # second page
-n.add(signalFrame, text='Signals')
-n.add(setupFrame, text='Setup')
+signalsFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
+finishTimesFrame = ttk.Frame(n, style='Control.TFrame')
+n.add(signalsFrame, text='Sound Signals')
+n.add(finishTimesFrame, text='Finish Times')
 
-#add widgets to control frame
-screenControl = SignalsInterface(signalFrame, raceboxRelay)
+#add widgets to each control frame
+SignalsInterface(signalsFrame, raceboxRelay)
+FinishTimesInterface(finishTimesFrame, raceboxRelay)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
-footerFrame.pack(side=BOTTOM, fill=X)
 footerFrame.grid_columnconfigure(0, weight=1)
 footerFrame.grid_columnconfigure(1, weight=1)
 footerFrame.grid_columnconfigure(2, weight=1)
@@ -91,6 +93,13 @@ timeLabel = ttk.Label(
     font=('Monospace', 14, 'bold')
 )
 timeLabel.grid(column=1,row=0,padx=(0,0))
+
+#pack the main screen
+#packing the header and footer before the middle
+#means the middle will be reduced first when window is resized
+headerFrame.pack(side=TOP, fill=X)
+footerFrame.pack(side=BOTTOM, fill=X)
+n.pack(expand=True, fill=BOTH)
 
 def __hootSound():
     #messagebox.showinfo(title='Test hoot', message='Hoot!')
