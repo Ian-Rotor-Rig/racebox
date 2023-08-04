@@ -30,7 +30,8 @@ python3 -V
 
 ## Required software for serial devices
 pyserial - to install type:\
-pip3 install pyserial
+python -m pip install pyserial (Windows)\
+pip3 install pyserial (Ubuntu)
 
 (possibly pip rather than pip3 on Windows)
 
@@ -42,7 +43,9 @@ and should be removed. This is caused by a conflict between product ids:
 sudo apt remove brltty
 
 ## Required software for HID devices
-hid - to install type:\
+Read these instructions: [PyPi HID](https://pypi.org/project/hid/)
+
+hid - to install on Ubuntu type:\
 pip3 install hid
 
 ### Ubuntu
