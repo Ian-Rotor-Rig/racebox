@@ -18,7 +18,7 @@ code in rbrelayconfig.py to support other relays if you have the instruction set
 
 ## Required software
 python3.x (latest version)\
-pip (usually installed with Python)\
+pip (usually installed with Python)
 
 ### Windows
 Download the installer available on the python.org website\
@@ -29,7 +29,7 @@ Python3 is usually pre-installed. Check by typing in terminal:\
 python3 -V
 
 ## Required software for serial devices
-pyserial\
+pyserial - to install type:\
 pip3 install pyserial
 
 (possibly pip rather than pip3 on Windows)
@@ -42,7 +42,7 @@ and should be removed. This is caused by a conflict between product ids:
 sudo apt remove brltty
 
 ## Required software for HID devices
-hid
+hid - to install type:\
 pip3 install hid
 
 ### Ubuntu
@@ -56,7 +56,7 @@ sudo usermod -a -G dialout myusername
 
 ### HID Relay Miscellaneous Information
 
-The python-hidapi is one way to address HID relays\
+The python-hidapi is one way to address HID relays
 
 In Ubuntu, install usbrelay
 
