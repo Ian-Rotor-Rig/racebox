@@ -35,8 +35,12 @@
 ### sudo usermod -a -G dialout ian
 #
 
+try:
+    import serial
+except ModuleNotFoundError as error:
+    print(str(error))
+
 from time import sleep
-import serial
 import threading
 from rbrelayconfig import ch340
 from rbconfig import defaultOn2Off, serialRelayPort
@@ -46,12 +50,8 @@ from rbconfig import defaultOn2Off, serialRelayPort
 class USBSerialRelay:
         	
     def __init__(self):
-        try:
-            self.connection = serial.Serial()
-            self.__open()
-        except:
-            print('no serial module found')
-            self.active = False
+        self.connection = serial.Serial()
+        self.__open()
         
     def __del__(self):
         self.connection.close()
