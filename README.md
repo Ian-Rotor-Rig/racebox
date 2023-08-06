@@ -39,9 +39,12 @@ sudo apt install python3-pip
 #### Required software for serial devices
 pyserial - to install type:
 
-pip3 install pyserial (Ubuntu)\
+
+sudo apt install python3-serial\
 OR\
-sudo apt install python3-serial
+pip3 install pyserial (Ubuntu)\
+(you may need to add --break-system-packages as an option at\
+the end of the pip3 command - it is a long story)
 
 On Ubuntu the braille display kernel module prevents these serial devices working correctly\
 and should be removed. This is caused by a conflict between product ids:
@@ -55,8 +58,7 @@ sudo apt install usbrelay\
 (this seems to solve some permissions issues and add the required hidraw package)\
 
 pip3 install hid\
-(you may need to add --break-system-packages as an option at the end of the command\
-it is a long story)
+(there is no alternative apt package that provides the correct module)
 
 #### Ubuntu groups
 To work on Linux the user must be in the dialout group\
