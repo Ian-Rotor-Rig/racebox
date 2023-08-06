@@ -1,6 +1,9 @@
+try:
+    import hid
+except ModuleNotFoundError as error:
+    print(str(error))
 import threading
 from time import sleep
-import hid
 from rbrelayconfig import hid16c0
 from rbconfig import defaultOn2Off
 
