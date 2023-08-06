@@ -16,6 +16,12 @@ These relays quite often have the "Songle" name on the components
 The 1, 2 and 4 channel relays should work. It is not too hard to extend the\
 code in rbrelayconfig.py to support other relays if you have the instruction set.
 
+## Running Racebox
+Once installed Racebox is run like this:\
+python3 racebox.py
+
+(on Windows it may be python rather than python3)
+
 ## Required software
 python3.x (latest version)\
 
