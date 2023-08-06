@@ -55,7 +55,7 @@ sudo apt remove brltty
 Read these instructions: [PyPi HID](https://pypi.org/project/hid/)
 
 sudo apt install usbrelay\
-(this seems to solve some permissions issues and add the required hidraw package)\
+(this seems to solve some permissions issues and add the required hidraw package)
 
 pip3 install hid\
 (there is no alternative apt package that provides the correct module)
