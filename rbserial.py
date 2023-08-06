@@ -46,8 +46,12 @@ from rbconfig import defaultOn2Off, serialRelayPort
 class USBSerialRelay:
         	
     def __init__(self):
-        self.connection = serial.Serial()
-        self.__open()
+        try:
+            self.connection = serial.Serial()
+            self.__open()
+        except:
+            print('no serial module found')
+            self.active = False
         
     def __del__(self):
         self.connection.close()

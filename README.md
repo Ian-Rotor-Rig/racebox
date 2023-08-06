@@ -50,6 +50,7 @@ pip3 install hid
 
 ### Ubuntu
 sudo apt install python3-hid
+sudo apt install usbrelay (this seems to solve some permissions issues)
 
 ### Ubuntu groups
 To work on Linux the user must be in the dialout group\
