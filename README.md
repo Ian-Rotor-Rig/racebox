@@ -18,43 +18,49 @@ code in rbrelayconfig.py to support other relays if you have the instruction set
 
 ## Required software
 python3.x (latest version)\
-pip (usually installed with Python)
 
 ### Windows
 Download the installer available on the python.org website\
 Add Python/ and Python/Scripts to $PATH
 
+(more info on Windows installs needs to be added here)
+
+python -m pip install pyserial\
+python -m pip install hid
+
 ### Ubuntu (and many other Linux distros)
 Python3 is usually pre-installed. Check by typing in terminal:\
 python3 -V
 
-## Required software for serial devices
-pyserial - to install type:\
-python -m pip install pyserial (Windows)\
-pip3 install pyserial (Ubuntu)
+On some distros you may also need to install\
+sudo apt install python3-tk\
+sudo apt install python3-pip
 
-(possibly pip rather than pip3 on Windows)
+#### Required software for serial devices
+pyserial - to install type:
 
-### Ubuntu
-sudo apt install python3-serial\
-The braille display kernel module prevents these serial devices working correctly\
+pip3 install pyserial (Ubuntu)\
+OR\
+sudo apt install python3-serial
+
+On Ubuntu the braille display kernel module prevents these serial devices working correctly\
 and should be removed. This is caused by a conflict between product ids:
 
 sudo apt remove brltty
 
-## Required software for HID devices
+#### Required software for HID devices
 Read these instructions: [PyPi HID](https://pypi.org/project/hid/)
 
-hid - to install on Ubuntu type:\
-pip3 install hid
+sudo apt install usbrelay\
+(this seems to solve some permissions issues and add the required hidraw package)\
 
-### Ubuntu
-sudo apt install python3-hid
-sudo apt install usbrelay (this seems to solve some permissions issues)
+pip3 install hid\
+(you may need to add --break-system-packages as an option at the end of the command\
+it is a long story)
 
-### Ubuntu groups
+#### Ubuntu groups
 To work on Linux the user must be in the dialout group\
-(some docs suggest plugdev)
+(some docs also suggest plugdev)
 
 sudo usermod -a -G dialout myusername
 
