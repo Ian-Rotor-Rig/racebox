@@ -58,32 +58,40 @@ class USBSerialRelay:
             self.active = False
         
     def __del__(self):
-        if self.active: self.connection.close()
+        try:
+            self.connection.close()
+        except:
+            print('no active connection')
         
     def __open(self, driver=ch340, port=serialRelayPort, rate=9600):
         self.active = True
-        if self.connection.is_open: self.connection.close()
-        self.connection.baudrate = rate
-        self.connection.port = port
-        self.driver = driver
         try:
+            if self.connection.is_open: self.connection.close()
+            self.connection.baudrate = rate
+            self.connection.port = port
+            self.driver = driver
             self.connection.open()
         except:
             self.active = False
+            print('could not open serial device')
         
     def __close(self):
+        if not self.active: return
         self.connection.close()
         
     def configurePort(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
         self.__open(self, driver, port, rate)
         
     def isOpen(self):
+        if not self.active: return False
         return self.connection.is_open
         
     def on(self, ch=0):
+        if not self.active: return
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['on'])
 
     def off(self, ch=0):
+        if not self.active: return
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['off'])
         
     def __tOnOff(self, delay, ch):
@@ -94,5 +102,6 @@ class USBSerialRelay:
         self.__close()
 
     def onoff(self, delay=defaultOn2Off, ch=0):
+        if not self.active: return
         t = threading.Thread(target=self.__tOnOff, args=(delay, ch))
         t.start()
