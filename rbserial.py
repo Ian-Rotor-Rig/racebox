@@ -50,11 +50,15 @@ from rbconfig import defaultOn2Off, serialRelayPort
 class USBSerialRelay:
         	
     def __init__(self):
-        self.connection = serial.Serial()
-        self.__open()
+        try:
+            self.connection = serial.Serial()
+            self.__open()
+        except:
+            print('could not get connection to serial device')
+            self.active = False
         
     def __del__(self):
-        self.connection.close()
+        if self.active: self.connection.close()
         
     def __open(self, driver=ch340, port=serialRelayPort, rate=9600):
         self.active = True
