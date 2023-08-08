@@ -27,7 +27,6 @@ python3.x (latest version)\
 
 ### Windows
 Download the installer available on the python.org website\
-Add Python/ and Python/Scripts to $PATH
 
 The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
 Adding pip and tcl/tk during installation is important to Racebox
