@@ -20,7 +20,7 @@ code in rbrelayconfig.py to support other relays if you have the instruction set
 Once installed Racebox is run like this:\
 python3 racebox.py
 
-(on Windows it may be python rather than python3)
+(on Windows it is python rather than python3)
 
 ## Required software
 python3.x (latest version)\
@@ -29,7 +29,8 @@ python3.x (latest version)\
 Download the installer available on the python.org website\
 Add Python/ and Python/Scripts to $PATH
 
-(more info on Windows installs needs to be added here)
+The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
+Adding pip and tcl/tk during installation is important to Racebox
 
 python -m pip install pyserial\
 python -m pip install hid
