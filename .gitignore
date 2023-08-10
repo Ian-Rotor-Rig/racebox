@@ -2,3 +2,5 @@
 *.pyc
 #ignore editor backup files
 *.py~
+#ignore ini files
+*.ini

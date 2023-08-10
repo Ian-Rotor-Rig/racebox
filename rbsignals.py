@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from tkinter import (Button, Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, NW, W)
-from rbconfig import defaultSequence
+from rbconfig import RaceboxConfig
 
 class SignalsInterface:
 	sequenceList = [
@@ -20,6 +20,8 @@ class SignalsInterface:
 
 		self.countdownActive = False
 		self.relay = relay
+		self.config = RaceboxConfig()
+		self.on2Off = float(self.config.get('Signals', 'defaultOn2Off'))
 
 		#create internal frames
 		fMain = Frame(fControl)
@@ -75,7 +77,7 @@ class SignalsInterface:
 			tooLate = signals[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
 			chk = self.__checkNextSignal(signals[0], tooLate)
 			if chk == SignalsInterface.SIGNAL_NOW:
-				self.relay.onoff()
+				self.relay.onoff(self.on2Off)
 			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
 				if signals[0] == starts[0]: starts.pop(0)
 				rm = signals.pop(0)
@@ -295,6 +297,7 @@ class SignalsInterface:
 		### https://www.pythontutorial.net/tkinter/tkinter-combobox/
 		self.selectedSequenceName = StringVar()
 		startSigEntry = ttk.Combobox(f, values=sequenceNames, textvariable=self.selectedSequenceName, state='readonly')
+		defaultSequence = int(self.config.get('Signals', 'defaultSequence'))
 		self.selectedSequenceName.set(sequenceNames[defaultSequence])
 		startSigEntry.grid(column=0,row=6,sticky='w')			
 			

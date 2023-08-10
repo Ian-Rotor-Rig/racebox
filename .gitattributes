@@ -11,6 +11,7 @@
 *.pdf             binary
 *.md              text diff=markdown
 *.txt             text
+*.ini             text export-ignore
 ################
 # from https://github.com/alexkaratarakis/gitattributes/blob/master/Python.gitattributes
 # Basic .gitattributes for a python repo.

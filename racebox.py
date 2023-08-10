@@ -6,6 +6,7 @@ from rbsignals import SignalsInterface
 from datetime import datetime
 from rbserial import USBSerialRelay
 from rbhid import USBHIDRelay
+from rbconfig import RaceboxConfig
 
 # Create the main window
 mainWindow = Tk()
@@ -29,6 +30,9 @@ s.configure('Footer.TFrame', background='black')
 s.configure('Custom.TNotebook', tabposition='ne', background='darkgrey')
 s.configure('StartTime.TLabel')
 s.configure('StartCount.TLabel')
+
+#general config
+config = RaceboxConfig()
 
 #USB relay
 raceboxRelay = USBHIDRelay()
@@ -102,8 +106,8 @@ footerFrame.pack(side=BOTTOM, fill=X)
 n.pack(expand=True, fill=BOTH)
 
 def __hootSound():
-    #messagebox.showinfo(title='Test hoot', message='Hoot!')
-    raceboxRelay.onoff()
+    on2Off = float(config.get('Signals', 'defaultOn2Off'))
+    raceboxRelay.onoff(on2Off)
 
 hootBtn = Button(footerFrame, text='Hoot', command=__hootSound)
 hootBtn.grid(column=2,row=0, sticky=E, padx=(0,10))

@@ -5,29 +5,29 @@ except ModuleNotFoundError as error:
 import threading
 from time import sleep
 from rbrelayconfig import hid16c0
-from rbconfig import defaultOn2Off
 
 class USBHIDRelay:
         	
-    def __init__(self, driver=hid16c0):
+    def __init__(self):
+        self.active = False
         try:
-            #print('opening HID device')
-            #print(hid.enumerate())
+            self.__open()
+        except:
+            print('Hid device not found')
+            self.active = False
+            
+    def __del__(self):
+        pass
+        
+    def __open(self, driver=hid16c0, port='', rate=0):
+        try:
             self.h = hid.Device(driver['vid'], driver['pid'])
-            #print('Manufacturer: %s' % self.h.manufacturer)
             self.driver = driver
             self.active = True
             
         except:
             self.active = False
-            # print('could not open HID device')
-            
-    def __del__(self):
-        pass
-        
-    def __open(self, driver='', port='', rate=0):
-        pass
-        
+            # print('could not open HID device')        
     def __close(self):
         pass
         
@@ -50,6 +50,6 @@ class USBHIDRelay:
         if self.active: self.h.write(self.driver['channel'][ch]['off'])
         self.__close()
 
-    def onoff(self, delay=defaultOn2Off, ch=0):
+    def onoff(self, delay=0.5, ch=0):
         t = threading.Thread(target=self.__tOnOff, args=(delay, ch))
         t.start()

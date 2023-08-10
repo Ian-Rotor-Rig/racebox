@@ -16,6 +16,22 @@ These relays quite often have the "Songle" name on the components
 The 1, 2 and 4 channel relays should work. It is not too hard to extend the\
 code in rbrelayconfig.py to support other relays if you have the instruction set.
 
+## Configuration File
+The configuration file rbconfig.ini is created when the program is started.\
+The options are:
+
+\[Signals\]\
+defaulton2off = 0.75 (seconds - the length of a normal hoot)\
+finishon2off = 0.25 (seconds - the length of a finish hoot)\
+defaultsequence = 0 (the signal sequence selected in the interface 0=first 1=second etc)\
+
+\[Relays\]\
+serialrelayport = /dev/ttyUSB0 (the serial port used - Windows is COM1 COM2 COM3 etc, Linux is /dev/ttyUSB0, /dev/ttyUSB1 etc)\
+
+\[Files\]\
+finshfileusedefaultfolder = True (True or False - use the home directory for the current user)\
+finishfilefolder = /Documents/ (the folder to save finish times documents in)
+
 ## Running Racebox
 Once installed Racebox is run like this:\
 python3 racebox.py
@@ -23,13 +39,13 @@ python3 racebox.py
 (on Windows it is python rather than python3)
 
 ## Required software
-python3.x (latest version)\
+python3.x (latest version)
 
 ### Windows
 Download the installer available on the python.org website\
 
 The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
-Adding pip and tcl/tk during installation is important to Racebox
+The "pip" and "tcl/tk (tkinter)" options should be enabled during installation
 
 In addition to Python, install support for serial and HID relays:\
 python -m pip install pyserial\

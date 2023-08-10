@@ -2,12 +2,13 @@ from datetime import datetime
 import os
 from tkinter import BOTH, BOTTOM, CENTER, END, LEFT, NW, RIGHT, TOP, S, W, X, Y, Frame, LabelFrame, Scrollbar, ttk
 import tkinter as tk
-from rbconfig import finishFileFolder, finshFileUseDefaultFolder, finishOn2Off
+from rbconfig import RaceboxConfig
 
 class FinishTimesInterface:
     def __init__(self, fControl: ttk.Frame, relay):
         self.pos = 1
         self.relay = relay
+        self.config = RaceboxConfig()
         
         f = Frame(fControl)
         f.pack(expand=True, fill=BOTH)
@@ -46,7 +47,8 @@ class FinishTimesInterface:
         btnReset.pack(expand=True, anchor=CENTER)  
           
     def finishAction(self):
-        self.relay.onoff(finishOn2Off)
+        on2Off = float(self.config.get('Signals', 'finishOn2Off'))
+        self.relay.onoff(on2Off)
         now = datetime.now()
         self.txtboxFinish.insert(END, '\n{:>3}'.format(self.pos), 'bold')
         self.txtboxFinish.insert(END, '  {} '.format(now.strftime('%H:%M:%S')))
@@ -58,8 +60,9 @@ class FinishTimesInterface:
         
     def saveToTxtFileAction(self):
         now = datetime.now()
-        defaultFolder = os.path.expanduser('~') if finshFileUseDefaultFolder else ''
-        saveFileName = finishFileFolder + 'finishes-{}.txt'.format(now.strftime('%Y%m%d-%H%M'))
+        useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
+        defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
+        saveFileName = self.config.get('Files','finishFileFolder') + 'finishes-{}.txt'.format(now.strftime('%Y%m%d-%H%M'))
         try:
             with open (defaultFolder + saveFileName, 'w+') as file:
                 file.write(self.txtboxFinish.get('1.0', END))
