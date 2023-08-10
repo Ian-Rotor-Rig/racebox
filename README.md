@@ -23,10 +23,10 @@ The options are:
 \[Signals\]\
 defaulton2off = 0.75 (seconds - the length of a normal hoot)\
 finishon2off = 0.25 (seconds - the length of a finish hoot)\
-defaultsequence = 0 (the signal sequence selected in the interface 0=first 1=second etc)\
+defaultsequence = 0 (the signal sequence selected in the interface 0=first 1=second etc)
 
 \[Relays\]\
-serialrelayport = /dev/ttyUSB0 (the serial port used - Windows is COM1 COM2 COM3 etc, Linux is /dev/ttyUSB0, /dev/ttyUSB1 etc)\
+serialrelayport = /dev/ttyUSB0 (the serial port used - Windows is COM1 COM2 COM3 etc, Linux is /dev/ttyUSB0, /dev/ttyUSB1 etc)
 
 \[Files\]\
 finshfileusedefaultfolder = True (True or False - use the home directory for the current user)\
@@ -42,7 +42,7 @@ python3 racebox.py
 python3.x (latest version)
 
 ### Windows
-Download the installer available on the python.org website\
+Download the installer available on the python.org website
 
 The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
 The "pip" and "tcl/tk (tkinter)" options should be enabled during installation
