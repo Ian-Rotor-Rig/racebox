@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from tkinter import ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, TOP, E, W, X, Y, Canvas, Frame, Label, LabelFrame, Scrollbar, ttk
+from tkinter import ALL, BOTH, BOTTOM, CENTER, END, LEFT, NW, RIGHT, TOP, E, W, X, Y, Canvas, Frame, Label, LabelFrame, Scrollbar, ttk
 import tkinter as tk
 from rbconfig import RaceboxConfig
 
@@ -15,18 +15,18 @@ class FinishTimesInterface:
         f.pack(expand=True, fill=BOTH)
         
         #left frame (for results)
-        lf = Frame(f, padx=10, pady=25)
+        lf = Frame(f, padx=5, pady=10)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
         
-        canvas = Canvas(lf)
-        sb = Scrollbar(lf, orient='vertical', command=canvas.yview)
-        self.finishFrame = Frame(canvas) #do not pack this
-        cw = canvas.create_window((0, 0), window=self.finishFrame, anchor=NW)
-        canvas.configure(yscrollcommand=sb.set)
-        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        self.canvas = Canvas(lf)
+        sb = Scrollbar(lf, orient='vertical', command=self.canvas.yview)
+        self.finishFrame = Frame(self.canvas) #do not pack this
+        cw = self.canvas.create_window((0, 0), window=self.finishFrame, anchor=NW)
+        self.canvas.configure(yscrollcommand=sb.set)
+        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         sb.pack(side=RIGHT, fill=Y)        
-        self.finishFrame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox(ALL)))
-        canvas.bind('<Configure>', lambda e: canvas.itemconfig(cw, width=e.width))
+        self.finishFrame.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox(ALL)))
+        self.canvas.bind('<Configure>', lambda e: self.canvas.itemconfig(cw, width=e.width))
         
         #left-side internal frame for rows of times
         self.rowFrame = Frame(self.finishFrame)
@@ -58,22 +58,25 @@ class FinishTimesInterface:
     def __addFinishRow(self):
         if self.pos == 1: self.__addFinishHdrRow()
         now = datetime.now()
-        
+        yPad = 2
         txtPos = '{:>3}'.format(self.pos)
         lPos = Label(self.rowFrame, text=txtPos, font='TkFixedFont')
-        lPos.grid(row=self.pos, column=0)
+        lPos.grid(row=self.pos, column=0, pady=yPad)
         lTime = Label(self.rowFrame, text='  {} '.format(now.strftime('%H:%M:%S')), font='TkFixedFont', width=12)
-        lTime.grid(row=self.pos, column=1)
+        lTime.grid(row=self.pos, column=1, pady=yPad)
         cbClass = ttk.Combobox(self.rowFrame, values=['Solo', 'RS200', 'Laser'], width=14)
-        cbClass.grid(row=self.pos, column=2, padx=5)
+        cbClass.grid(row=self.pos, column=2, padx=5, pady=yPad)
         validateNumbers = (self.rowFrame.register(self.__onlyNumbers), '%S')
         enSailNum = ttk.Entry(self.rowFrame, validate='key', validatecommand=validateNumbers, width=14)
-        enSailNum.grid(row=self.pos, column=3, padx=5)
+        enSailNum.grid(row=self.pos, column=3, padx=5, pady=yPad)
         enRaceNum = ttk.Entry(self.rowFrame, validate='key', validatecommand=validateNumbers, width=4)
-        enRaceNum.grid(row=self.pos, column=4, padx=5)
+        enRaceNum.grid(row=self.pos, column=4, padx=5, pady=yPad)
         enRaceNum.insert(0, '1')
         enNotes = ttk.Entry(self.rowFrame, width=40)
-        enNotes.grid(row=self.pos, column=5,padx=5)
+        enNotes.grid(row=self.pos, column=5,padx=5, pady=yPad)
+        #scroll down
+        self.canvas.update()
+        self.canvas.yview_moveto(1.0)        
         #increment finish pos
         self.pos += 1
         
