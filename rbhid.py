@@ -43,13 +43,21 @@ class USBHIDRelay:
     def off(self, ch=0):
         if self.active: self.h.write(self.driver['channel'][ch]['off'])
         
-    def __tOnOff(self, delay, ch):
+    def __tOnOff(self, delay, ch, count=1):
         self.__open()
-        if self.active: self.h.write(self.driver['channel'][ch]['on'])
-        sleep(delay)
-        if self.active: self.h.write(self.driver['channel'][ch]['off'])
+        print('count ', count)
+        for _ in range(count):  
+            print('start hoot')          
+            if self.active: self.h.write(self.driver['channel'][ch]['on'])
+            sleep(delay)
+            if self.active: self.h.write(self.driver['channel'][ch]['off'])
+            print('finish hoot')
         self.__close()
 
     def onoff(self, delay=0.5, ch=0):
         t = threading.Thread(target=self.__tOnOff, args=(delay, ch))
+        t.start()
+    
+    def onoffmulti(self, count=1, delay=0.5, ch=0):
+        t = threading.Thread(target=self.__tOnOff, args=(delay, ch, count))
         t.start()

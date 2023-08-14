@@ -1,6 +1,7 @@
 #from tkinter import *
 from tkinter import (TOP, font, ttk, PhotoImage, Button, messagebox, Frame,
 	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
+from rbextras import ExtrasInterface
 from rbfinishtimes import FinishTimesInterface
 from rbsignals import SignalsInterface
 from datetime import datetime
@@ -59,12 +60,15 @@ hdrLabel.grid(column=1,row=0,padx=(0,0))
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
 signalsFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
 finishTimesFrame = ttk.Frame(n, style='Control.TFrame')
+extrasFrame = ttk.Frame(n, style='Control.TFrame')
 n.add(signalsFrame, text='Sound Signals')
 n.add(finishTimesFrame, text='Finish Times')
+n.add(extrasFrame, text='Extras')
 
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
 FinishTimesInterface(finishTimesFrame, raceboxRelay)
+ExtrasInterface(extrasFrame, raceboxRelay)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
