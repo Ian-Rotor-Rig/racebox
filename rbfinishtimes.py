@@ -10,7 +10,9 @@ class FinishTimesInterface:
         self.relay = relay
         self.config = RaceboxConfig()
         
-        f = Frame(fControl)
+        self.fc = fControl
+        
+        f = Frame(self.fc)
         f.pack(expand=True, fill=BOTH)
         
         #frame for text box
@@ -48,7 +50,7 @@ class FinishTimesInterface:
           
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
-        self.relay.onoff(on2Off)
+        self.relay.onoff(self.fc, on2Off)
         now = datetime.now()
         self.txtboxFinish.insert(END, '\n{:>3}'.format(self.pos), 'bold')
         self.txtboxFinish.insert(END, '  {} '.format(now.strftime('%H:%M:%S')))

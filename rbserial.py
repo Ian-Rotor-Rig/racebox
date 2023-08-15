@@ -14,16 +14,17 @@ try:
 except ModuleNotFoundError as error:
     print(str(error))
 
-from time import sleep
-import threading
+#from time import sleep
+#import threading
 from rbrelayconfig import ch340
 
 #serial port functionality
 class USBSerialRelay:
         	
-    def __init__(self):
+    def __init__(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):
         try:
             self.connection = serial.Serial()
+            self.configure(driver, port, rate)
             self.__open()
         except:
             print('could not get connection to serial device')
@@ -35,13 +36,13 @@ class USBSerialRelay:
         except:
             print('no active connection')
         
-    def __open(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
+    def __open(self):
         self.active = True
         try:
             if self.connection.is_open: self.connection.close()
-            self.connection.baudrate = rate
-            self.connection.port = port
-            self.driver = driver
+            self.connection.baudrate = self.rate
+            self.connection.port = self.port
+            self.driver = self.driver
             self.connection.open()
         except:
             self.active = False
@@ -51,9 +52,16 @@ class USBSerialRelay:
         if not self.active: return
         self.connection.close()
         
-    def configurePort(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
-        self.__open(self, driver, port, rate)
+    def configurePort(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):
+        self.driver = driver
+        self.port = port
+        self.rate = rate
         
+    def configure(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
+        self.driver = driver
+        self.port = port
+        self.rate = rate
+
     def isOpen(self):
         if not self.active: return False
         return self.connection.is_open
@@ -65,15 +73,17 @@ class USBSerialRelay:
     def off(self, ch=0):
         if not self.active: return
         if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['off'])
-        
-    def __tOnOff(self, delay, ch):
+           
+    def onoff(self, w, delay=0.5, count=1, ch=0, relayOn=False):
+        if relayOn: 
+            self.off()
+            self.__close()
+            #print('off')
+            w.after(int(delay*1500), self.onoff, w, delay, count, ch, False)
+            return
+        if count < 1: return
         self.__open()
-        if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['on'])
-        sleep(delay)
-        if self.connection.is_open: self.connection.write(self.driver['channel'][ch]['off'])
-        self.__close()
-
-    def onoff(self, delay=0.5, ch=0):
-        if not self.active: return
-        t = threading.Thread(target=self.__tOnOff, args=(delay, ch))
-        t.start()
+        #print('on')
+        self.on()
+        count -= 1
+        w.after(int(delay*1000), self.onoff, w, delay, count, ch, True)

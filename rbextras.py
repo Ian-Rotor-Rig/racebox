@@ -16,7 +16,8 @@ class ExtrasInterface:
         self.fontTitle = Font(weight=BOLD)
 
 		#create internal frames
-        fExtras = Frame(fControl)
+        self.fc = fControl
+        fExtras = Frame(self.fc)
         fExtras.pack(expand=True, fill=BOTH)
         
         #add flag section
@@ -71,18 +72,18 @@ class ExtrasInterface:
         flagsSectionFrame.pack(fill=BOTH, expand=True, anchor=W, padx=4)
         
         lFlagsTitle = Label(flagsSectionFrame, text='Flags and Sound Signals', font=self.fontTitle)
-        lFlagsTitle.pack(anchor=W)
+        lFlagsTitle.pack(anchor=W, padx=5, pady=10)
         
         flagsFrame = Frame(flagsSectionFrame)
-        flagsFrame.pack(fill=BOTH, expand=True)
+        flagsFrame.pack(fill=BOTH, expand=True, pady=10)
         
         #scrollable canvas and frame
-        cv = Canvas(flagsFrame)
+        cv = Canvas(flagsFrame, highlightthickness=0)
         cv.pack(side=LEFT, expand=True, fill=BOTH)
         sb = Scrollbar(flagsFrame, command=cv.yview)
         sb.pack(side=RIGHT, fill=Y)   
         cv.configure(yscrollcommand = sb.set)     
-        flagsListFrame = Frame(cv, padx=25, pady=5)
+        flagsListFrame = Frame(cv, padx=5, pady=5)
         cw = cv.create_window([0,0], window=flagsListFrame, anchor=N+W)
         cv.bind('<Configure>', lambda e: cv.configure(scrollregion=cv.bbox(ALL)))
         flagsListFrame.bind('<Configure>', lambda e: cv.itemconfigure(cw, width=e.width))
@@ -101,5 +102,4 @@ class ExtrasInterface:
                 btnFlagHoot.grid(row=i, column=3, sticky=W, padx=10)
             
         def __flagHoot(n):
-            print('hoot', n)
-            self.relay.onoffmulti(n, self.on2Off)
+            self.relay.onoff(self.fc, self.on2Off, n)

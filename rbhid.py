@@ -2,8 +2,6 @@ try:
     import hid
 except ModuleNotFoundError as error:
     print(str(error))
-import threading
-from time import sleep
 from rbrelayconfig import hid16c0
 
 class USBHIDRelay:
@@ -42,22 +40,17 @@ class USBHIDRelay:
 
     def off(self, ch=0):
         if self.active: self.h.write(self.driver['channel'][ch]['off'])
-        
-    def __tOnOff(self, delay, ch, count=1):
-        self.__open()
-        print('count ', count)
-        for _ in range(count):  
-            print('start hoot')          
-            if self.active: self.h.write(self.driver['channel'][ch]['on'])
-            sleep(delay)
-            if self.active: self.h.write(self.driver['channel'][ch]['off'])
-            print('finish hoot')
-        self.__close()
-
-    def onoff(self, delay=0.5, ch=0):
-        t = threading.Thread(target=self.__tOnOff, args=(delay, ch))
-        t.start()
     
-    def onoffmulti(self, count=1, delay=0.5, ch=0):
-        t = threading.Thread(target=self.__tOnOff, args=(delay, ch, count))
-        t.start()
+    def onoff(self, w, delay=0.5, count=1, ch=0, relayOn=False):
+        if relayOn: 
+            self.off()
+            self.__close()
+            #print('off')
+            w.after(int(delay*1500), self.onoff, w, delay, count, ch, False)
+            return
+        if count < 1: return
+        self.__open()
+        #print('on')
+        self.on()
+        count -= 1
+        w.after(int(delay*1000), self.onoff, w, delay, count, ch, True)

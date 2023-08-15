@@ -77,7 +77,7 @@ class SignalsInterface:
 			tooLate = signals[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
 			chk = self.__checkNextSignal(signals[0], tooLate)
 			if chk == SignalsInterface.SIGNAL_NOW:
-				self.relay.onoff(self.on2Off)
+				self.relay.onoff(self.fCountdown, self.on2Off)
 			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
 				if signals[0] == starts[0]: starts.pop(0)
 				rm = signals.pop(0)

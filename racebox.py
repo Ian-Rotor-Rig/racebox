@@ -37,7 +37,8 @@ config = RaceboxConfig()
 
 #USB relay
 raceboxRelay = USBHIDRelay()
-if not raceboxRelay.active: raceboxRelay = USBSerialRelay()
+serialPort = config.get('Relays', 'serialRelayPort')
+if not raceboxRelay.active: raceboxRelay = USBSerialRelay(serialPort)
 if not raceboxRelay.active: print('no USB relay found')
 
 #header
@@ -111,7 +112,7 @@ n.pack(expand=True, fill=BOTH)
 
 def __hootSound():
     on2Off = float(config.get('Signals', 'defaultOn2Off'))
-    raceboxRelay.onoff(on2Off)
+    raceboxRelay.onoff(mainWindow, on2Off)
 
 hootBtn = Button(footerFrame, text='Hoot', command=__hootSound)
 hootBtn.grid(column=2,row=0, sticky=E, padx=(0,10))
