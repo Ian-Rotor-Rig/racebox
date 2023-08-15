@@ -6,21 +6,21 @@ from rbrelayconfig import hid16c0
 
 class USBHIDRelay:
         	
-    def __init__(self):
+    def __init__(self, driver=hid16c0):
         self.active = False
+        self.driver = driver
         try:
-            self.__open()
+            self.__open(driver)
         except:
-            print('Hid device not found')
+            print('HID device not found')
             self.active = False
             
     def __del__(self):
         pass
         
-    def __open(self, driver=hid16c0, port='', rate=0):
+    def __open(self):
         try:
-            self.h = hid.Device(driver['vid'], driver['pid'])
-            self.driver = driver
+            self.h = hid.Device(self.driver['vid'], self.driver['pid'])
             self.active = True
             
         except:
@@ -29,7 +29,7 @@ class USBHIDRelay:
     def __close(self):
         pass
         
-    def configure(self, driver=hid16c0, port='', rate=0):
+    def configure(self, driver=hid16c0):
         self.driver = driver
         
     def isOpen(self):

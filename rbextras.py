@@ -1,5 +1,5 @@
 
-from tkinter import ALL, BOTH, DISABLED, LEFT, N, NONE, RIGHT, W, Y, Button, Canvas, Frame, Label, PhotoImage, Scrollbar, ttk
+from tkinter import ALL, BOTH, DISABLED, LEFT, N, NONE, RIGHT, W, Y, Canvas, Frame, Label, PhotoImage, Scrollbar, ttk
 from tkinter.font import BOLD, Font
 from tkinter.scrolledtext import ScrolledText
 from rbconfig import RaceboxConfig
@@ -98,7 +98,7 @@ class ExtrasInterface:
             lFlagInfoTitle.grid(row=i, column=1, sticky=W, pady=10, padx=10)
             lFlagInfo.grid(row=i, column=2, sticky=W, pady=10, padx=10)
             if f[3] > 0:
-                btnFlagHoot = Button(flagsListFrame, text=str(f[3])+' x Hoot', command= lambda h = f[3]: __flagHoot(h))
+                btnFlagHoot = ttk.Button(flagsListFrame, text=str(f[3])+' x Hoot', command= lambda h = f[3]: __flagHoot(h), style='Custom.TButton')
                 btnFlagHoot.grid(row=i, column=3, sticky=W, padx=10)
             
         def __flagHoot(n):

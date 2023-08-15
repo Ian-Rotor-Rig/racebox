@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from tkinter import (Button, Frame, Label, Spinbox, StringVar,
+from tkinter import (Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, NW, W)
 from rbconfig import RaceboxConfig
 
@@ -35,7 +35,7 @@ class SignalsInterface:
 		fBtnPanel = Frame(fControl)
 		fBtnPanel.pack(expand=False, fill=BOTH)
 		
-		self.startBtn = Button(fBtnPanel, text='Start Countdown', command=self.__changeCountdownStatus)
+		self.startBtn = ttk.Button(fBtnPanel, text='Start Countdown', command=self.__changeCountdownStatus, style='Custom.TButton')
 		self.startBtn.pack(anchor=NW, pady=(40,0))
   
 		self.__initConfigInterface(self.fSigConfig)
@@ -244,11 +244,11 @@ class SignalsInterface:
 			text='General Recall'
 		)
 		lAddStartTxt.grid(column=0,row=5,sticky='w')		
-		lAddStartBtn = Button(
+		lAddStartBtn = ttk.Button(
 			f,
 			text='Add Start',
    			command=self.__addStart,
-			anchor=W
+   			style='Custom.TButton'
 		)
 		lAddStartBtn.grid(column=1,row=5,sticky='w')	
 

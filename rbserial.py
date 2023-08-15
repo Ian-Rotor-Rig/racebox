@@ -14,11 +14,8 @@ try:
 except ModuleNotFoundError as error:
     print(str(error))
 
-#from time import sleep
-#import threading
 from rbrelayconfig import ch340
 
-#serial port functionality
 class USBSerialRelay:
         	
     def __init__(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):

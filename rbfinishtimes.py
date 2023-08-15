@@ -35,17 +35,17 @@ class FinishTimesInterface:
         rf.pack(side=LEFT, ipadx=25, fill=Y)
 
         #finish button
-        btnFinish = ttk.Button(rf, text="Finish", command=self.finishAction)
+        btnFinish = ttk.Button(rf, text="Finish", command=self.finishAction, style='Custom.TButton')
         btnFinish.pack(side=TOP, anchor=W, pady=50)
 
         #right bottom frame
         rbf = LabelFrame(rf, text='Use Between Races')
         rbf.pack(side=BOTTOM, anchor=W, pady=25, ipady=25)
         #save as file button
-        btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction)
+        btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
         #reset counter button
-        btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction)
+        btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)  
           
     def finishAction(self):

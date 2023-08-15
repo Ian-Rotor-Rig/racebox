@@ -22,15 +22,19 @@ default_font.configure(size=12)
 icon = PhotoImage(file='racebox192.png')
 mainWindow.iconphoto(False, icon)
 
+# header colour
+hdrColour = 'black'
+
 # Styles
 s = ttk.Style()
 #s.theme_use('alt')
 s.configure('Control.TFrame', borderwidth=4, relief='flat')
 s.configure('Setup.TFrame', borderwidth=4, relief='flat')
+s.configure('Header.TFrame', background=hdrColour)
 s.configure('Footer.TFrame', background='black')
-s.configure('Custom.TNotebook', tabposition='ne', background='darkgrey')
-s.configure('StartTime.TLabel')
-s.configure('StartCount.TLabel')
+s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
+s.configure('TNotebook.Tab', background='limegreen', padding=[8, 4]) #lightcolor= not for this theme
+s.configure('Custom.TButton', background='silver', padding=(8,4))
 
 #general config
 config = RaceboxConfig()
@@ -42,18 +46,18 @@ if not raceboxRelay.active: raceboxRelay = USBSerialRelay(serialPort)
 if not raceboxRelay.active: print('no USB relay found')
 
 #header
-headerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
-headerCanvas = Canvas(headerFrame, bg="black", bd=0, width=75, height=75, highlightthickness=0)
-headerCanvas.grid(column=0,row=0,padx=(0,0), sticky=W)
-rbLogoSmall = PhotoImage(file='racebox72.png')
+headerFrame = ttk.Frame(mainWindow, style='Header.TFrame')
+headerCanvas = Canvas(headerFrame, bg=hdrColour, bd=0, width=50, height=50, highlightthickness=0)
+headerCanvas.grid(column=0,row=0,padx=(0,0), ipady=2, sticky=W)
+rbLogoSmall = PhotoImage(file='racebox50.png')
 headerCanvas.create_image(2,2, anchor=NW, image=rbLogoSmall)
 
 hdrLabel = ttk.Label(
     headerFrame,
     text='Racebox',
-    foreground='ghostwhite',
-    background='black',
-    font=('Terminal', 14)
+    foreground='whitesmoke',
+    background=hdrColour,
+    font=('Helvetica', 14, 'bold')
 )
 hdrLabel.grid(column=1,row=0,padx=(0,0))
 
@@ -62,9 +66,9 @@ n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
 signalsFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
 finishTimesFrame = ttk.Frame(n, style='Control.TFrame')
 extrasFrame = ttk.Frame(n, style='Control.TFrame')
-n.add(signalsFrame, text='Sound Signals')
+n.add(signalsFrame, text='Auto Signals')
+n.add(extrasFrame, text='Manual Signals')
 n.add(finishTimesFrame, text='Finish Times')
-n.add(extrasFrame, text='Extras')
 
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
@@ -114,7 +118,7 @@ def __hootSound():
     on2Off = float(config.get('Signals', 'defaultOn2Off'))
     raceboxRelay.onoff(mainWindow, on2Off)
 
-hootBtn = Button(footerFrame, text='Hoot', command=__hootSound)
+hootBtn = ttk.Button(footerFrame, text='Hoot', command=__hootSound, style='Custom.TButton')
 hootBtn.grid(column=2,row=0, sticky=E, padx=(0,10))
 
 def clockLoop():
