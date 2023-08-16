@@ -12,7 +12,7 @@ class USBHIDRelay:
         try:
             self.__open(driver)
         except:
-            print('HID device not found')
+            #print('HID device not found')
             self.active = False
             
     def __del__(self):

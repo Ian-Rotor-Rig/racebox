@@ -43,7 +43,7 @@ class USBSerialRelay:
             self.connection.open()
         except:
             self.active = False
-            print('could not open serial device')
+            #print('could not open serial device')
         
     def __close(self):
         if not self.active: return

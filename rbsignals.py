@@ -25,7 +25,7 @@ class SignalsInterface:
 
 		#create internal frames
 		fMain = Frame(fControl)
-		fMain.pack(expand=False, fill=BOTH)
+		fMain.pack(expand=False, fill=BOTH, padx=(25,0), pady=(25,0))
 
 		self.fCountdown = Frame(fMain)
 		
@@ -33,7 +33,7 @@ class SignalsInterface:
 		self.fSigConfig.pack(expand=False, fill=BOTH)
 		
 		fBtnPanel = Frame(fControl)
-		fBtnPanel.pack(expand=False, fill=BOTH)
+		fBtnPanel.pack(expand=False, fill=BOTH, padx=(25,0))
 		
 		self.startBtn = ttk.Button(fBtnPanel, text='Start Countdown', command=self.__changeCountdownStatus, style='Custom.TButton')
 		self.startBtn.pack(anchor=NW, pady=(40,0))
