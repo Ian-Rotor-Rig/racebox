@@ -10,7 +10,9 @@ class FinishTimesInterface:
         self.relay = relay
         self.config = RaceboxConfig()
         
-        f = Frame(fControl)
+        self.fc = fControl
+        
+        f = Frame(self.fc)
         f.pack(expand=True, fill=BOTH)
         
         #frame for text box
@@ -33,22 +35,22 @@ class FinishTimesInterface:
         rf.pack(side=LEFT, ipadx=25, fill=Y)
 
         #finish button
-        btnFinish = ttk.Button(rf, text="Finish", command=self.finishAction)
+        btnFinish = ttk.Button(rf, text="Finish", command=self.finishAction, style='Custom.TButton')
         btnFinish.pack(side=TOP, anchor=W, pady=50)
 
         #right bottom frame
         rbf = LabelFrame(rf, text='Use Between Races')
         rbf.pack(side=BOTTOM, anchor=W, pady=25, ipady=25)
         #save as file button
-        btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction)
+        btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
         #reset counter button
-        btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction)
+        btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)  
           
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
-        self.relay.onoff(on2Off)
+        self.relay.onoff(self.fc, on2Off)
         now = datetime.now()
         self.txtboxFinish.insert(END, '\n{:>3}'.format(self.pos), 'bold')
         self.txtboxFinish.insert(END, '  {} '.format(now.strftime('%H:%M:%S')))
