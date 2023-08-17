@@ -29,7 +29,8 @@ class ExtrasInterface:
                 'flags/P-prep96.png',
                 'Preparatory',
                 '5 minutes to the start (10-5-Go) or 4 minutes (5-4-1-Go)',
-                0
+                0,
+                '(Automatic)'
             ],
             [
                 'flags/X-single-recall96.png',
@@ -53,7 +54,8 @@ class ExtrasInterface:
                 'flags/C-change-course96.png',
                 'Course Change',
                 'The next mark has been moved - repeated sound signals should be made',
-                0
+                0,
+                '(Repeated hoots)'
             ],
             [
                 'flags/AP-postpone96.png',
@@ -100,6 +102,9 @@ class ExtrasInterface:
             if f[3] > 0:
                 btnFlagHoot = ttk.Button(flagsListFrame, text=str(f[3])+' x Hoot', command= lambda h = f[3]: __flagHoot(h), style='Custom.TButton')
                 btnFlagHoot.grid(row=i, column=3, sticky=W, padx=10)
+            if len(f) > 4:
+                lNoButtonInfo = Label(flagsListFrame, text=f[4], justify=LEFT)
+                lNoButtonInfo.grid(row=i, column=3, sticky=W, padx=10)
             
         def __flagHoot(n):
             self.relay.onoff(self.fc, self.on2Off, n)
