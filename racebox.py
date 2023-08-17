@@ -35,6 +35,8 @@ s.configure('Footer.TFrame', background='black')
 s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
 s.configure('TNotebook.Tab', background='limegreen', padding=[8, 4]) #lightcolor= not for this theme
 s.configure('Custom.TButton', background='silver', padding=(8,4))
+#s.configure('Custom.TEntry', font=font.Font(family='Helvetica', size=12))
+#s.configure('Custom.TSpinbox', font='Helvetica, 18')
 
 #general config
 config = RaceboxConfig()
