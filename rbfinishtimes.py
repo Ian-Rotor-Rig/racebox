@@ -10,10 +10,12 @@ from rbconfig import RaceboxConfig
 class FinishTimesInterface:
     
     TITLE_FONT = 'Helvetica 12 bold'
-    FIXED_FONT = 'Monospace 12'
+    FIXED_FONT = 'Courier 12'
+    FIXED_FONT_BOLD = 'Courier 12 bold'
     
     def __init__(self, fControl: ttk.Frame, relay):
         self.pos = 1
+        self.finishRow = 1 #row zero is the header
         self.finishList = []
         self.relay = relay
         self.config = RaceboxConfig()
@@ -49,7 +51,7 @@ class FinishTimesInterface:
         lraceName.pack(side=LEFT, anchor=W)
         self.raceNameValue = StringVar()
         enRaceName = ttk.Entry(raceNameFrame, textvariable=self.raceNameValue)
-        enRaceName.pack(side=LEFT, anchor=W)
+        enRaceName.pack(side=LEFT, anchor=W, padx=(4,0))
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
         lraceTimesTitle.pack(anchor=W, pady=(2,4))
         
@@ -67,6 +69,11 @@ class FinishTimesInterface:
         #left-side internal frame for rows of times
         self.rowFrame = Frame(self.finishFrame)
         self.rowFrame.pack(fill=X, expand=True)
+        #define columns
+        self.colFrames = []
+        for i in range(7):
+            self.colFrames.append(Frame(self.rowFrame))
+            self.colFrames[i].grid(row=0, column=i, padx=(0, 10))
                 
         #right frame (for the buttons etc)
         rf = Frame(f)
@@ -74,11 +81,11 @@ class FinishTimesInterface:
 
         #finish button
         btnFinish = ttk.Button(rf, text="Finish", command=self.finishAction, style='Custom.TButton')
-        btnFinish.pack(side=TOP, anchor=W, pady=50)
+        btnFinish.pack(pady=(100,0))
 
         #right bottom frame (reset and save)
         rbf = LabelFrame(rf, text='Use Between Races')
-        rbf.pack(side=BOTTOM, anchor=W, pady=25, ipady=25)
+        rbf.pack(side=BOTTOM, anchor=W, pady=(25), ipady=25)
         #save as file button
         btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
@@ -92,18 +99,16 @@ class FinishTimesInterface:
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
         self.relay.onoff(self.fc, on2Off)
-        self.__addFinishRow(on2Off)
+        finishData = self.__addFinishData()
+        self.finishData.append(finishData)
+        self.pos += 1
+        self.finishRow += 1
+        self.__drawFinishRow(finishData)
         
-    def __addFinishHeader(self):
-        pass
-        
-    def __addFinishRow(self, on2Off):
-        if self.pos == 1: self.__addFinishHdrRow()
-        self.relay.onoff(self.fc, on2Off)
+    def __addFinishData(self):
         now = datetime.now()
-
         #finish data for this row
-        finishRow = {
+        newFinishData = {
             'pos': str(self.pos),
             'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond},
             'class': StringVar(),
@@ -112,49 +117,55 @@ class FinishTimesInterface:
             'status': StringVar(),
             'notes': StringVar()
         }
-        self.finishData.append(finishRow)
-        finishRow['race'].set('1')
+        newFinishData['race'].set('1') #default race number to 1
+        return newFinishData
+
+    def __drawFinishRow(self, rowData):
+        #draw the row
+        above = 8
+        txtPos = '{:>3}'.format(rowData['pos'])
+        lPos = Label(self.colFrames[0], text=txtPos, font=FinishTimesInterface.FIXED_FONT)
+        lPos.pack(side=BOTTOM, pady=(above,0))
         
-        #draw the interface
-        yPad = 2
-        txtPos = '{:>3}'.format(self.pos)
-        lPos = Label(self.rowFrame, text=txtPos, font=FinishTimesInterface.FIXED_FONT)
-        lPos.grid(row=self.pos, column=0, pady=yPad)
-        lTime = Label(self.rowFrame, text='  {} '.format(now.strftime('%H:%M:%S')), font=FinishTimesInterface.FIXED_FONT)
-        lTime.grid(row=self.pos, column=1, pady=yPad)
-        cbClass = ttk.Combobox(self.rowFrame, values=self.classNames, textvariable=finishRow['class'], width=14)
-        cbClass.grid(row=self.pos, column=2, padx=5, pady=yPad)
-        validateNumbers = (self.rowFrame.register(self.__onlyNumbers), '%S')
-        enSailNum = ttk.Entry(self.rowFrame, validate='key', validatecommand=validateNumbers, textvariable=finishRow['sailnum'], width=14)
-        enSailNum.grid(row=self.pos, column=3, padx=5, pady=yPad)
-        enRaceNum = ttk.Entry(self.rowFrame, validate='key', validatecommand=validateNumbers, textvariable=finishRow['race'], width=4)
-        enRaceNum.grid(row=self.pos, column=4, padx=5, pady=yPad)
-        cbStatus = ttk.Combobox(self.rowFrame, values=self.statusCodes, textvariable=finishRow['status'], state='readonly', width=8)
-        cbStatus.grid(row=self.pos, column=5, padx=5, pady=yPad)
-        enNotes = ttk.Entry(self.rowFrame, textvariable=finishRow['notes'], width=25)
-        enNotes.grid(row=self.pos, column=6,padx=5, pady=yPad)
-        #scroll down
-        self.canvas.update()
-        self.canvas.yview_moveto(1.0)        
-        #increment finish pos
-        self.pos += 1
+        lTime = Label(self.colFrames[1], text='{:02}:{:02}:{:02}'.format(rowData['clock']['hh'], rowData['clock']['mm'], rowData['clock']['ss']), font=FinishTimesInterface.FIXED_FONT_BOLD)
+        lTime.pack(side=BOTTOM, pady=(above,0))
         
+        cbClass = ttk.Combobox(self.colFrames[2], values=self.classNames, textvariable=rowData['class'], width=14)
+        cbClass.pack(side=BOTTOM, pady=(above,0))
+        
+        validateNumbers = (self.colFrames[3].register(self.__onlyNumbers), '%S')
+        
+        enSailNum = ttk.Entry(self.colFrames[3], validate='key', validatecommand=validateNumbers, textvariable=rowData['sailnum'], width=14)
+        enSailNum.pack(side=BOTTOM, pady=(above,0))
+        
+        enRaceNum = ttk.Entry(self.colFrames[4], validate='key', validatecommand=validateNumbers, textvariable=rowData['race'], width=4)
+        enRaceNum.pack(side=BOTTOM, pady=(above,0))
+        
+        cbStatus = ttk.Combobox(self.colFrames[5], values=self.statusCodes, textvariable=rowData['status'], state='readonly', width=8)
+        cbStatus.pack(side=BOTTOM, pady=(above,0))
+        
+        enNotes = ttk.Entry(self.colFrames[6], textvariable=rowData['notes'], width=25)
+        enNotes.pack(side=BOTTOM, pady=(above,0))
+
     def __addFinishHdrRow(self):
-        fileHdr = [['#', E], ['Clock', E+W], ['Class', W], ['Sail Number', W], ['Race', W], ['Status', W], ['Notes', W]]
+        fileHdr = [['#', E], ['Clock', CENTER], ['Class', W], ['Sail Number', W], ['Race', W], ['Status', W], ['Notes', W]]
         for i,h in enumerate(fileHdr):
-            l = Label(self.rowFrame, text=h[0])
-            l.grid(row=0, column=i, sticky=h[1], ipadx=4 if h[1] == W else 0)
+            l = Label(self.colFrames[i], text=h[0])
+            l.pack(anchor=h[1])
         
     def __onlyNumbers(self, k):
         if k in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']: return True
         return False
         
     def resetCounterAction(self):
-        for c in self.rowFrame.winfo_children():
-            c.destroy()
         self.pos = 1
-        self.__addFinishHdrRow()
+        self.finishRow = 1
+        self.finishData = []
         self.raceNameValue.set('')
+        for c in self.colFrames:
+            for w in c.winfo_children():
+                w.destroy()
+        self.__addFinishHdrRow()
         
     def saveToTxtFileAction(self):
         now = datetime.now()
@@ -162,7 +173,6 @@ class FinishTimesInterface:
         defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
         saveFileName = self.config.get('Files','finishFileFolder') + 'finishes-{}.txt'.format(now.strftime('%Y%m%d-%H%M'))
         fileHdr = 'Pos, Clock, Class, Sail, Rating, Race, Status, Notes\n'
-        #maybe need to add in a race name etc?
         try:
             with open (defaultFolder + saveFileName, 'w+') as file:
                 if len(self.raceNameValue.get()) > 0: file.write(self.raceNameValue.get() + '\n')
