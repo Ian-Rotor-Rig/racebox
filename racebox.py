@@ -23,7 +23,9 @@ icon = PhotoImage(file='racebox192.png')
 mainWindow.iconphoto(False, icon)
 
 # header colour
-hdrColour = 'black'
+hdrColour = 'silver'
+hdrColourText = 'darkslategrey'
+ftrColour = 'black'
 
 # Styles
 s = ttk.Style()
@@ -31,7 +33,7 @@ s = ttk.Style()
 s.configure('Control.TFrame', borderwidth=4, relief='flat')
 s.configure('Setup.TFrame', borderwidth=4, relief='flat')
 s.configure('Header.TFrame', background=hdrColour)
-s.configure('Footer.TFrame', background='black')
+s.configure('Footer.TFrame', background=ftrColour)
 s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
 s.configure('TNotebook.Tab', background='limegreen', padding=[8, 4]) #lightcolor= not for this theme
 s.configure('Custom.TButton', background='silver', padding=(8,4))
@@ -57,7 +59,7 @@ headerCanvas.create_image(2,2, anchor=NW, image=rbLogoSmall)
 hdrLabel = ttk.Label(
     headerFrame,
     text='Racebox',
-    foreground='whitesmoke',
+    foreground=hdrColourText,
     background=hdrColour,
     font=('Helvetica', 14, 'bold')
 )
