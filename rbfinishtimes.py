@@ -8,6 +8,10 @@ import tkinter as tk
 from rbconfig import RaceboxConfig
 
 class FinishTimesInterface:
+    
+    TITLE_FONT = 'Helvetica 12 bold'
+    FIXED_FONT = 'Monospace 12'
+    
     def __init__(self, fControl: ttk.Frame, relay):
         self.pos = 1
         self.finishList = []
@@ -36,6 +40,20 @@ class FinishTimesInterface:
         lf = Frame(f, padx=5, pady=10)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
         
+        #header for race details
+        self.raceDetailsFrame = Frame(lf)
+        self.raceDetailsFrame.pack(anchor=W)
+        raceNameFrame = Frame(self.raceDetailsFrame)
+        raceNameFrame.pack(pady=(2,12))
+        lraceName = Label(raceNameFrame, text='Race name')
+        lraceName.pack(side=LEFT, anchor=W)
+        self.raceNameValue = StringVar()
+        enRaceName = ttk.Entry(raceNameFrame, textvariable=self.raceNameValue)
+        enRaceName.pack(side=LEFT, anchor=W)
+        lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
+        lraceTimesTitle.pack(anchor=W, pady=(2,4))
+        
+        #canvas for scrollable finish times
         self.canvas = Canvas(lf, highlightthickness=0)
         sb = Scrollbar(lf, orient='vertical', command=self.canvas.yview)
         self.finishFrame = Frame(self.canvas) #do not pack this
@@ -66,12 +84,18 @@ class FinishTimesInterface:
         btnReset.pack(expand=True, anchor=CENTER)          
         #reset counter button
         btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction, style='Custom.TButton')
-        btnReset.pack(expand=True, anchor=CENTER)  
+        btnReset.pack(expand=True, anchor=CENTER)
+        
+        #finish times header
+        self.__addFinishHdrRow()
         
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
         self.relay.onoff(self.fc, on2Off)
         self.__addFinishRow(on2Off)
+        
+    def __addFinishHeader(self):
+        pass
         
     def __addFinishRow(self, on2Off):
         if self.pos == 1: self.__addFinishHdrRow()
@@ -94,9 +118,9 @@ class FinishTimesInterface:
         #draw the interface
         yPad = 2
         txtPos = '{:>3}'.format(self.pos)
-        lPos = Label(self.rowFrame, text=txtPos, font='TkFixedFont')
+        lPos = Label(self.rowFrame, text=txtPos, font=FinishTimesInterface.FIXED_FONT)
         lPos.grid(row=self.pos, column=0, pady=yPad)
-        lTime = Label(self.rowFrame, text='  {} '.format(now.strftime('%H:%M:%S')), font='TkFixedFont', width=12)
+        lTime = Label(self.rowFrame, text='  {} '.format(now.strftime('%H:%M:%S')), font=FinishTimesInterface.FIXED_FONT)
         lTime.grid(row=self.pos, column=1, pady=yPad)
         cbClass = ttk.Combobox(self.rowFrame, values=self.classNames, textvariable=finishRow['class'], width=14)
         cbClass.grid(row=self.pos, column=2, padx=5, pady=yPad)
@@ -129,6 +153,8 @@ class FinishTimesInterface:
         for c in self.rowFrame.winfo_children():
             c.destroy()
         self.pos = 1
+        self.__addFinishHdrRow()
+        self.raceNameValue.set('')
         
     def saveToTxtFileAction(self):
         now = datetime.now()
@@ -139,6 +165,7 @@ class FinishTimesInterface:
         #maybe need to add in a race name etc?
         try:
             with open (defaultFolder + saveFileName, 'w+') as file:
+                if len(self.raceNameValue.get()) > 0: file.write(self.raceNameValue.get() + '\n')
                 file.write(fileHdr)
                 for f in self.finishData:
                     rating = ''

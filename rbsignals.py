@@ -16,7 +16,8 @@ class SignalsInterface:
 	SIGNAL_MAX_AGE = 1500 #ms beyond this a signal is too late to be used
 	COUNTDOWN_PRECISION = 500 #ms
  
-	ENTRY_FONT = 'Helvetica, 12'
+	ENTRY_FONT = 'Helvetica 12'
+	FIXED_FONT_LARGE = 'Monospace 14 bold'
 	
 	def __init__(self, fControl: ttk.Frame, relay):
 
@@ -175,7 +176,7 @@ class SignalsInterface:
 			text='00:00:00'
 		)
 		self.lNextStartTime.configure(
-			font='Monospace 14 bold',
+			font=SignalsInterface.FIXED_FONT_LARGE,
 			bg='plum',
 			padx=12,
 			pady=8
@@ -194,7 +195,7 @@ class SignalsInterface:
 			text='00:00:00'
 		)
 		self.lTime2Start.configure(
-			font='Monospace 14 bold',
+			font=SignalsInterface.FIXED_FONT_LARGE,
 			bg='orange',
 			padx=12,
 			pady=8
