@@ -13,9 +13,10 @@ class FinishTimesInterface:
     FIXED_FONT = 'Courier 12'
     FIXED_FONT_BOLD = 'Courier 12 bold'
     
+    STATUS_FINISHED = 'Finished'
+    
     def __init__(self, fControl: ttk.Frame, relay):
         self.pos = 1
-        self.finishRow = 1 #row zero is the header
         self.finishList = []
         self.relay = relay
         self.config = RaceboxConfig()
@@ -81,11 +82,15 @@ class FinishTimesInterface:
 
         #finish button
         btnFinish = ttk.Button(rf, text="Finish", command=self.finishAction, style='Custom.TButton')
-        btnFinish.pack(pady=(100,0))
+        btnFinish.pack(anchor=W, pady=(50,0))
 
+        #non finisher button
+        btnReset = ttk.Button(rf, text="Non-Finisher", command=self.nonFinishAction, style='Custom.TButton')
+        btnReset.pack(anchor=W, pady=(50,0))  
+                
         #right bottom frame (reset and save)
         rbf = LabelFrame(rf, text='Use Between Races')
-        rbf.pack(side=BOTTOM, anchor=W, pady=(25), ipady=25)
+        rbf.pack(side=BOTTOM, anchor=W, pady=(0,25), ipady=25)
         #save as file button
         btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
@@ -93,7 +98,7 @@ class FinishTimesInterface:
         btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)
         
-        #finish times header
+        #finish times header        
         self.__addFinishHdrRow()
         
     def finishAction(self):
@@ -102,14 +107,18 @@ class FinishTimesInterface:
         finishData = self.__addFinishData()
         self.finishData.append(finishData)
         self.pos += 1
-        self.finishRow += 1
-        self.__drawFinishRow(finishData)
+        self.__drawFinishRow(finishData)        
         
-    def __addFinishData(self):
+    def nonFinishAction(self):
+        finishData = self.__addFinishData(False)
+        self.finishData.append(finishData)
+        self.__drawFinishRow(finishData)
+                
+    def __addFinishData(self, finisher=True):
         now = datetime.now()
         #finish data for this row
         newFinishData = {
-            'pos': str(self.pos),
+            'pos': self.pos if finisher else 0,
             'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond},
             'class': StringVar(),
             'sailnum': StringVar(), #the interface uses a string
@@ -118,16 +127,20 @@ class FinishTimesInterface:
             'notes': StringVar()
         }
         newFinishData['race'].set('1') #default race number to 1
+        if finisher: newFinishData['status'].set('Finished')
         return newFinishData
 
     def __drawFinishRow(self, rowData):
         #draw the row
         above = 8
-        txtPos = '{:>3}'.format(rowData['pos'])
+        txtPos = '{:>3}'.format(rowData['pos'])if rowData['pos'] > 0 else ''
         lPos = Label(self.colFrames[0], text=txtPos, font=FinishTimesInterface.FIXED_FONT)
         lPos.pack(side=BOTTOM, pady=(above,0))
         
-        lTime = Label(self.colFrames[1], text='{:02}:{:02}:{:02}'.format(rowData['clock']['hh'], rowData['clock']['mm'], rowData['clock']['ss']), font=FinishTimesInterface.FIXED_FONT_BOLD)
+        lTime = Label(self.colFrames[1], 
+            text='{:02}:{:02}:{:02}'.format(rowData['clock']['hh'], rowData['clock']['mm'], rowData['clock']['ss'])
+             if rowData['status'].get() == FinishTimesInterface.STATUS_FINISHED else '', 
+            font=FinishTimesInterface.FIXED_FONT_BOLD)
         lTime.pack(side=BOTTOM, pady=(above,0))
         
         cbClass = ttk.Combobox(self.colFrames[2], values=self.classNames, textvariable=rowData['class'], width=14)
@@ -141,9 +154,13 @@ class FinishTimesInterface:
         enRaceNum = ttk.Entry(self.colFrames[4], validate='key', validatecommand=validateNumbers, textvariable=rowData['race'], width=4)
         enRaceNum.pack(side=BOTTOM, pady=(above,0))
         
-        cbStatus = ttk.Combobox(self.colFrames[5], values=self.statusCodes, textvariable=rowData['status'], state='readonly', width=8)
-        cbStatus.pack(side=BOTTOM, pady=(above,0))
-        
+        if rowData['status'].get() == FinishTimesInterface.STATUS_FINISHED:
+            lStatus = Label(self.colFrames[5], text=FinishTimesInterface.STATUS_FINISHED)
+            lStatus.pack(side=BOTTOM, anchor=W, pady=(above,0))
+        else:
+            cbStatus = ttk.Combobox(self.colFrames[5], values=self.statusCodes, textvariable=rowData['status'], state='readonly', width=8)
+            cbStatus.pack(side=BOTTOM, pady=(above,0))
+                    
         enNotes = ttk.Entry(self.colFrames[6], textvariable=rowData['notes'], width=25)
         enNotes.pack(side=BOTTOM, pady=(above,0))
 
@@ -159,7 +176,6 @@ class FinishTimesInterface:
         
     def resetCounterAction(self):
         self.pos = 1
-        self.finishRow = 1
         self.finishData = []
         self.raceNameValue.set('')
         for c in self.colFrames:
@@ -183,8 +199,16 @@ class FinishTimesInterface:
                         if c['name'].lower().strip() == f['class'].get().lower().strip():
                             rating = str(c['rating'])
                     lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
-                            f['pos'], f['clock']['hh'],f['clock']['mm'],f['clock']['ss'],
-                            f['class'].get(), f['sailnum'].get(), rating, f['race'].get(), f['status'].get(), f['notes'].get()
+                            f['pos'] if f['pos'] > 0 else '',
+                            f['clock']['hh'] if f['pos'] > 0 else 0,
+                            f['clock']['mm'] if f['pos'] > 0 else 0,
+                            f['clock']['ss'] if f['pos'] > 0 else 0,
+                            f['class'].get(),
+                            f['sailnum'].get(),
+                            rating,
+                            f['race'].get(),
+                            f['status'].get() if f['status'].get() != FinishTimesInterface.STATUS_FINISHED else '',
+                            f['notes'].get()
                         )
                     file.write(lineOut)
                 tk.messagebox.showinfo('Save File', 'File {}{} saved'.format(defaultFolder, saveFileName))
