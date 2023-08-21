@@ -32,7 +32,8 @@ class FinishTimesInterface:
         self.statusCodes = ['', 'RET', 'OCS', 'DSQ', 'DNF', 'Other']
                 
         #finish data
-        self.finishData = []
+        tmpSave = self.__getAutoSavedFinishData()
+        self.finishData = tmpSave['data']
         
         self.fc = fControl
         
@@ -51,6 +52,7 @@ class FinishTimesInterface:
         lraceName = Label(raceNameFrame, text='Race name')
         lraceName.pack(side=LEFT, anchor=W)
         self.raceNameValue = StringVar()
+        self.raceNameValue.set(tmpSave['name'])
         enRaceName = ttk.Entry(raceNameFrame, textvariable=self.raceNameValue)
         enRaceName.pack(side=LEFT, anchor=W, padx=(4,0))
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
@@ -100,6 +102,10 @@ class FinishTimesInterface:
         
         #finish times header        
         self.__addFinishHdrRow()
+        if len(tmpSave['data']) > 0:
+            for row in tmpSave['data']:
+                self.__drawFinishRow(row)
+                if not row['pos'] == 0: self.pos = row['pos'] + 1
         
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
@@ -107,12 +113,14 @@ class FinishTimesInterface:
         finishData = self.__addFinishData()
         self.finishData.append(finishData)
         self.pos += 1
-        self.__drawFinishRow(finishData)        
+        self.__drawFinishRow(finishData)
+        self.__autoSaveFinishData()
         
     def nonFinishAction(self):
         finishData = self.__addFinishData(False)
         self.finishData.append(finishData)
         self.__drawFinishRow(finishData)
+        self.__autoSaveFinishData()
                 
     def __addFinishData(self, finisher=True):
         now = datetime.now()
@@ -184,6 +192,13 @@ class FinishTimesInterface:
         self.__addFinishHdrRow()
         
     def saveToTxtFileAction(self):
+        saveResult = self.saveToTxtFile()
+        if saveResult['result']:
+            tk.messagebox.showinfo('Save File', saveResult['msg'])
+        else:
+            tk.messagebox.showinfo('Save File Error', saveResult['msg'])
+        
+    def saveToTxtFile(self):
         now = datetime.now()
         useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
         defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
@@ -211,6 +226,61 @@ class FinishTimesInterface:
                             f['notes'].get()
                         )
                     file.write(lineOut)
-                tk.messagebox.showinfo('Save File', 'File {}{} saved'.format(defaultFolder, saveFileName))
+                return {'result': True, 'msg': 'File {}{} saved'.format(defaultFolder, saveFileName)}
         except Exception as error:
-            tk.messagebox.showerror('Save File Error', 'Could not save the file {}{} - {}'.format(defaultFolder, saveFileName, error))
+            return {'result': False, 'msg': 'Could not save the file {}{} - {}'.format(defaultFolder, saveFileName, error)}
+    
+    def __getTempFileName(self):
+        homeFolder = os.path.expanduser('~')
+        return homeFolder + '/rbtemp.json'        
+            
+    def __autoSaveFinishData(self):
+        saveFileName = self.__getTempFileName()
+        tempFile = {
+            'name': self.raceNameValue.get(),
+            'data': []
+        }
+        for rd in self.finishData:
+            rd = {
+                'pos': rd['pos'],
+                'clock': rd['clock'],
+                'class': rd['class'].get(),
+                'sailnum':rd['sailnum'].get(),
+                'race': rd['race'].get(),
+                'status': rd['status'].get(),
+                'notes': rd['notes'].get()
+            }
+            tempFile['data'].append(rd)
+        try:
+            with open (saveFileName, 'w+') as file:
+                file.write(json.dumps(tempFile))
+                #print('temp file written')
+        except Exception as error:
+            print(error)
+            
+    def __getAutoSavedFinishData(self):
+        ##### remove temp file when proper save is successful
+        ##### update temp file when a change is made to a field
+        raceInfo = {
+            'name': '',
+            'data': []
+        }
+        tmpFile = self.__getTempFileName()
+        try:
+            with open (tmpFile, 'r') as file:
+                tmp = json.load(file)
+                raceInfo['name'] = tmp['name']
+                for row in tmp['data']:
+                    raceInfo['data'].append({
+                            'pos': row['pos'],
+                            'clock': row['clock'],
+                            'class': StringVar(value=row['class']),
+                            'sailnum': StringVar(value=row['sailnum']),
+                            'race': StringVar(value=row['race']),
+                            'status': StringVar(value=row['status']),
+                            'notes': StringVar(value=row['notes'])
+                        })
+                return raceInfo
+        except Exception as error:
+            #print(error)
+            return raceInfo
