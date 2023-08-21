@@ -10,9 +10,9 @@ class USBHIDRelay:
         self.active = False
         self.driver = driver
         try:
-            self.__open(driver)
-        except:
-            #print('HID device not found')
+            self.__open()
+        except Exception as error:
+            print(error)
             self.active = False
             
     def __del__(self):
@@ -22,10 +22,8 @@ class USBHIDRelay:
         try:
             self.h = hid.Device(self.driver['vid'], self.driver['pid'])
             self.active = True
-            
         except:
             self.active = False
-            # print('could not open HID device')        
     def __close(self):
         pass
         
