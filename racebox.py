@@ -1,13 +1,13 @@
 #from tkinter import *
 from tkinter import (TOP, font, ttk, PhotoImage, Button, messagebox, Frame,
 	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
-from rbextras import ExtrasInterface
-from rbfinishtimes import FinishTimesInterface
-from rbsignals import SignalsInterface
+from lib.rbextras import ExtrasInterface
+from lib.rbfinishtimes import FinishTimesInterface
+from lib.rbsignals import SignalsInterface
 from datetime import datetime
-from rbserial import USBSerialRelay
-from rbhid import USBHIDRelay
-from rbconfig import RaceboxConfig
+from lib.rbserial import USBSerialRelay
+from lib.rbhid import USBHIDRelay
+from lib.rbconfig import RaceboxConfig
 
 # Create the main window
 mainWindow = Tk()
@@ -19,7 +19,7 @@ default_font = font.nametofont("TkDefaultFont")
 default_font.configure(size=12)
 
 # window icon
-icon = PhotoImage(file='racebox192.png')
+icon = PhotoImage(file='images/racebox192.png')
 mainWindow.iconphoto(False, icon)
 
 # header colour
@@ -51,7 +51,7 @@ if not raceboxRelay.active: print('no USB relay found')
 headerFrame = ttk.Frame(mainWindow, style='Header.TFrame')
 headerCanvas = Canvas(headerFrame, bg=hdrColour, bd=0, width=50, height=50, highlightthickness=0)
 headerCanvas.grid(column=0,row=0,padx=(0,0), ipady=2, sticky=W)
-rbLogoSmall = PhotoImage(file='racebox50.png')
+rbLogoSmall = PhotoImage(file='images/racebox50.png')
 headerCanvas.create_image(2,2, anchor=NW, image=rbLogoSmall)
 
 hdrLabel = ttk.Label(
@@ -88,7 +88,7 @@ logoFrame.grid(column=0,row=0,padx=(0,0), sticky=W)
 
 footerCanvas = Canvas(logoFrame, bg="black", bd=0, width=60, height=60, highlightthickness=0)
 footerCanvas.grid(column=0,row=0,padx=(0,0))
-rotorRigLogoSmall = PhotoImage(file='sail50.png')
+rotorRigLogoSmall = PhotoImage(file='images/sail50.png')
 footerCanvas.create_image(2,2, anchor=NW, image=rotorRigLogoSmall)
 
 rrLabel = ttk.Label(

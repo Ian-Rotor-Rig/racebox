@@ -1,11 +1,10 @@
-from aifc import _aifc_params
 from datetime import datetime
 import json
 import os
-from tkinter import (ALL, BOTH, BOTTOM, CENTER, END, LEFT, NW, RIGHT, TOP, E, W, X, Y,
+from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, W, X, Y,
     Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, ttk)
 import tkinter as tk
-from rbconfig import RaceboxConfig
+from lib.rbconfig import RaceboxConfig
 
 class FinishTimesInterface:
     
@@ -207,7 +206,7 @@ class FinishTimesInterface:
         else:
             tk.messagebox.showinfo('Save File Error', saveResult['msg'])
         
-    def saveToTxtFile(self):
+    def __saveToTxtFile(self):
         now = datetime.now()
         useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
         defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''

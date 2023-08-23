@@ -14,7 +14,7 @@ try:
 except ModuleNotFoundError as error:
     print(str(error))
 
-from rbrelayconfig import ch340
+from lib.rbrelayconfig import ch340
 
 class USBSerialRelay:
         	
