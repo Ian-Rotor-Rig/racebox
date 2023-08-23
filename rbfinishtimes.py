@@ -32,7 +32,8 @@ class FinishTimesInterface:
         self.statusCodes = ['', 'RET', 'OCS', 'DSQ', 'DNF', 'Other']
                 
         #finish data
-        self.finishData = []
+        asInfo = self.__getAutoSavedFinishData()
+        self.finishData = asInfo['data']
         
         self.fc = fControl
         
@@ -51,7 +52,9 @@ class FinishTimesInterface:
         lraceName = Label(raceNameFrame, text='Race name')
         lraceName.pack(side=LEFT, anchor=W)
         self.raceNameValue = StringVar()
+        if len(asInfo['name']) > 0: self.raceNameValue.set(asInfo['name'])
         enRaceName = ttk.Entry(raceNameFrame, textvariable=self.raceNameValue)
+        enRaceName.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         enRaceName.pack(side=LEFT, anchor=W, padx=(4,0))
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
         lraceTimesTitle.pack(anchor=W, pady=(2,4))
@@ -95,11 +98,15 @@ class FinishTimesInterface:
         btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
         #reset counter button
-        btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetCounterAction, style='Custom.TButton')
+        btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetFinishBoxAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)
         
         #finish times header        
         self.__addFinishHdrRow()
+        if len(asInfo['data']) > 0:
+            for row in asInfo['data']:
+                self.__drawFinishRow(row)
+                if not row['pos'] == 0: self.pos = row['pos'] + 1
         
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
@@ -107,12 +114,14 @@ class FinishTimesInterface:
         finishData = self.__addFinishData()
         self.finishData.append(finishData)
         self.pos += 1
-        self.__drawFinishRow(finishData)        
+        self.__drawFinishRow(finishData)
+        self.autoSaveAction()
         
     def nonFinishAction(self):
         finishData = self.__addFinishData(False)
         self.finishData.append(finishData)
         self.__drawFinishRow(finishData)
+        self.autoSaveAction()
                 
     def __addFinishData(self, finisher=True):
         now = datetime.now()
@@ -145,14 +154,18 @@ class FinishTimesInterface:
         
         cbClass = ttk.Combobox(self.colFrames[2], values=self.classNames, textvariable=rowData['class'], width=14)
         cbClass.pack(side=BOTTOM, pady=(above,0))
+        cbClass.bind('<KeyRelease>', lambda e: self.autoSaveAction())
+        cbClass.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
         
         validateNumbers = (self.colFrames[3].register(self.__onlyNumbers), '%S')
         
         enSailNum = ttk.Entry(self.colFrames[3], validate='key', validatecommand=validateNumbers, textvariable=rowData['sailnum'], width=14)
         enSailNum.pack(side=BOTTOM, pady=(above,0))
+        enSailNum.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         
         enRaceNum = ttk.Entry(self.colFrames[4], validate='key', validatecommand=validateNumbers, textvariable=rowData['race'], width=4)
         enRaceNum.pack(side=BOTTOM, pady=(above,0))
+        enRaceNum.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         
         if rowData['status'].get() == FinishTimesInterface.STATUS_FINISHED:
             lStatus = Label(self.colFrames[5], text=FinishTimesInterface.STATUS_FINISHED)
@@ -160,9 +173,11 @@ class FinishTimesInterface:
         else:
             cbStatus = ttk.Combobox(self.colFrames[5], values=self.statusCodes, textvariable=rowData['status'], state='readonly', width=8)
             cbStatus.pack(side=BOTTOM, pady=(above,0))
-                    
+            cbStatus.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
+                            
         enNotes = ttk.Entry(self.colFrames[6], textvariable=rowData['notes'], width=25)
         enNotes.pack(side=BOTTOM, pady=(above,0))
+        enNotes.bind('<KeyRelease>', lambda e: self.autoSaveAction())
 
     def __addFinishHdrRow(self):
         fileHdr = [['#', E], ['Clock', CENTER], ['Class', W], ['Sail Number', W], ['Race', W], ['Status', W], ['Notes', W]]
@@ -174,7 +189,7 @@ class FinishTimesInterface:
         if k in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']: return True
         return False
         
-    def resetCounterAction(self):
+    def resetFinishBoxAction(self):
         self.pos = 1
         self.finishData = []
         self.raceNameValue.set('')
@@ -184,6 +199,15 @@ class FinishTimesInterface:
         self.__addFinishHdrRow()
         
     def saveToTxtFileAction(self):
+        saveResult = self.__saveToTxtFile()
+        if saveResult['result']:
+            tk.messagebox.showinfo('Save File', saveResult['msg'])
+            tmpFile = self.__getAutoSaveFileName()
+            if os.path.exists(tmpFile): os.remove(tmpFile)            
+        else:
+            tk.messagebox.showinfo('Save File Error', saveResult['msg'])
+        
+    def saveToTxtFile(self):
         now = datetime.now()
         useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
         defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
@@ -211,6 +235,61 @@ class FinishTimesInterface:
                             f['notes'].get()
                         )
                     file.write(lineOut)
-                tk.messagebox.showinfo('Save File', 'File {}{} saved'.format(defaultFolder, saveFileName))
+                return {'result': True, 'msg': 'File {}{} saved'.format(defaultFolder, saveFileName)}
         except Exception as error:
-            tk.messagebox.showerror('Save File Error', 'Could not save the file {}{} - {}'.format(defaultFolder, saveFileName, error))
+            return {'result': False, 'msg': 'Could not save the file {}{} - {}'.format(defaultFolder, saveFileName, error)}
+    
+    def __getAutoSaveFileName(self):
+        homeFolder = os.path.expanduser('~')
+        return homeFolder + '/rbautosave.json'
+    
+    def autoSaveAction(self):
+        self.__autoSaveFinishData()
+            
+    def __autoSaveFinishData(self):
+        saveFileName = self.__getAutoSaveFileName()
+        tempFile = {
+            'name': self.raceNameValue.get(),
+            'data': []
+        }
+        for rd in self.finishData:
+            rd = {
+                'pos': rd['pos'],
+                'clock': rd['clock'],
+                'class': rd['class'].get(),
+                'sailnum':rd['sailnum'].get(),
+                'race': rd['race'].get(),
+                'status': rd['status'].get(),
+                'notes': rd['notes'].get()
+            }
+            tempFile['data'].append(rd)
+        try:
+            with open (saveFileName, 'w+') as file:
+                file.write(json.dumps(tempFile))
+        except Exception as error:
+            print(error)
+            
+    def __getAutoSavedFinishData(self):
+        raceInfo = {
+            'name': '',
+            'data': []
+        }
+        tmpFile = self.__getAutoSaveFileName()
+        try:
+            with open (tmpFile, 'r') as file:
+                tmp = json.load(file)
+                raceInfo['name'] = tmp['name']
+                for row in tmp['data']:
+                    raceInfo['data'].append({
+                            'pos': row['pos'],
+                            'clock': row['clock'],
+                            'class': StringVar(value=row['class']),
+                            'sailnum': StringVar(value=row['sailnum']),
+                            'race': StringVar(value=row['race']),
+                            'status': StringVar(value=row['status']),
+                            'notes': StringVar(value=row['notes'])
+                        })
+                return raceInfo
+        except: # Exception as error:
+            return raceInfo
+        
