@@ -1,8 +1,7 @@
 
-from tkinter import ALL, BOTH, DISABLED, LEFT, N, NONE, RIGHT, W, Y, Canvas, Frame, Label, PhotoImage, Scrollbar, ttk
+from tkinter import ALL, BOTH, LEFT, N, NONE, RIGHT, W, Y, Canvas, Frame, Label, PhotoImage, Scrollbar, ttk
 from tkinter.font import BOLD, Font
-from tkinter.scrolledtext import ScrolledText
-from rbconfig import RaceboxConfig
+from lib.rbconfig import RaceboxConfig
 
 class ExtrasInterface:
     

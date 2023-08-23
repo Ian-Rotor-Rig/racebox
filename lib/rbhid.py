@@ -2,7 +2,7 @@ try:
     import hid
 except ModuleNotFoundError as error:
     print(str(error))
-from rbrelayconfig import hid16c0
+from lib.rbrelayconfig import hid16c0
 
 class USBHIDRelay:
         	

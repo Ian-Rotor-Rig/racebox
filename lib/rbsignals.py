@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from tkinter import (Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, NW, W)
-from rbconfig import RaceboxConfig
+from lib.rbconfig import RaceboxConfig
 
 class SignalsInterface:
 	sequenceList = [
