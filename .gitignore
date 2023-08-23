@@ -4,3 +4,5 @@
 *.py~
 #ignore ini files
 *.ini
+#editor files
+.vscode
