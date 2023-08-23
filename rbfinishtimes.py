@@ -270,8 +270,6 @@ class FinishTimesInterface:
             print(error)
             
     def __getAutoSavedFinishData(self):
-        ##### remove temp file when proper save is successful
-        ##### update temp file when a change is made to a field
         raceInfo = {
             'name': '',
             'data': []
