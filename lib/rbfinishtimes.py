@@ -1,7 +1,8 @@
 from datetime import datetime
 import json
 import os
-from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, W, X, Y,
+import sched
+from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
     Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, ttk)
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
@@ -38,14 +39,20 @@ class FinishTimesInterface:
         
         f = Frame(self.fc)
         f.pack(expand=True, fill=BOTH)
-        
+          
         #left frame (for results)
-        lf = Frame(f, padx=5, pady=10)
+        lf = Frame(f)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
-        
+
+        #left side lower frame for approaching boats
+        self.abFrame = Frame(lf)
+        self.abFrame.pack(side=BOTTOM, anchor=SW, fill=X)
+        testlabel = Label(self.abFrame, text='test label')
+        testlabel.pack(anchor=W)
+                
         #header for race details
         self.raceDetailsFrame = Frame(lf)
-        self.raceDetailsFrame.pack(anchor=W)
+        self.raceDetailsFrame.pack(anchor=W, padx=10, pady=10)
         raceNameFrame = Frame(self.raceDetailsFrame)
         raceNameFrame.pack(pady=(2,12))
         lraceName = Label(raceNameFrame, text='Race name')
@@ -56,7 +63,7 @@ class FinishTimesInterface:
         enRaceName.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         enRaceName.pack(side=LEFT, anchor=W, padx=(4,0))
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
-        lraceTimesTitle.pack(anchor=W, pady=(2,4))
+        lraceTimesTitle.pack(anchor=W, pady=(4,0))
         
         #canvas for scrollable finish times
         self.canvas = Canvas(lf, highlightthickness=0)
@@ -64,7 +71,7 @@ class FinishTimesInterface:
         self.finishFrame = Frame(self.canvas) #do not pack this
         cw = self.canvas.create_window((0, 0), window=self.finishFrame, anchor=NW)
         self.canvas.configure(yscrollcommand=sb.set)
-        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        self.canvas.pack(side=LEFT, fill=BOTH, expand=True, padx=2)
         sb.pack(side=RIGHT, fill=Y)        
         self.finishFrame.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox(ALL)))
         self.canvas.bind('<Configure>', lambda e: self.canvas.itemconfig(cw, width=e.width))
@@ -72,12 +79,8 @@ class FinishTimesInterface:
         #left-side internal frame for rows of times
         self.rowFrame = Frame(self.finishFrame)
         self.rowFrame.pack(fill=X, expand=True)
-        #define columns
-        self.colFrames = []
-        for i in range(7):
-            self.colFrames.append(Frame(self.rowFrame))
-            self.colFrames[i].grid(row=0, column=i, padx=(0, 10))
-                
+        self.validateNumbers = (self.rowFrame.register(self.__onlyNumbers), '%S')
+
         #right frame (for the buttons etc)
         rf = Frame(f)
         rf.pack(side=LEFT, ipadx=10, padx=25, fill=Y)
@@ -101,11 +104,15 @@ class FinishTimesInterface:
         btnReset.pack(expand=True, anchor=CENTER)
         
         #finish times header        
-        self.__addFinishHdrRow()
+        self.__addFinishHdr(self.rowFrame)
+        
+        #autosave data
         if len(asInfo['data']) > 0:
-            for row in asInfo['data']:
-                self.__drawFinishRow(row)
-                if not row['pos'] == 0: self.pos = row['pos'] + 1
+            for row in range(len(asInfo['data'])):
+                self.__addFinishRow(self.rowFrame)
+                if not asInfo['data'][row]['pos'] == 0: self.pos = asInfo['data'][row]['pos'] + 1
+                print('pos is now ', self.pos)
+            self.__populateFinishGrid(self.rowFrame, asInfo['data'])
         
     def finishAction(self):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
@@ -113,14 +120,16 @@ class FinishTimesInterface:
         finishData = self.__addFinishData()
         self.finishData.append(finishData)
         self.pos += 1
-        self.__drawFinishRow(finishData)
         self.autoSaveAction()
+        self.__addFinishRow(self.rowFrame)
+        self.__populateFinishGrid(self.rowFrame, self.finishData)
         
     def nonFinishAction(self):
         finishData = self.__addFinishData(False)
         self.finishData.append(finishData)
-        self.__drawFinishRow(finishData)
         self.autoSaveAction()
+        self.__addFinishRow(self.rowFrame)
+        self.__populateFinishGrid(self.rowFrame, self.finishData)
                 
     def __addFinishData(self, finisher=True):
         now = datetime.now()
@@ -138,51 +147,84 @@ class FinishTimesInterface:
         if finisher: newFinishData['status'].set('Finished')
         return newFinishData
 
-    def __drawFinishRow(self, rowData):
-        #draw the row
-        above = 8
-        txtPos = '{:>3}'.format(rowData['pos'])if rowData['pos'] > 0 else ''
-        lPos = Label(self.colFrames[0], text=txtPos, font=FinishTimesInterface.FIXED_FONT)
-        lPos.pack(side=BOTTOM, pady=(above,0))
+    def __populateFinishGrid(self, f, rowData):
+        rows = len(rowData)
+        if rows < 1: return
+        for r in range(rows):
+            gridRow = rows - r #populate table in reverse order
+
+            #pos
+            cell = f.grid_slaves(row=gridRow, column=0)
+            cell[0].configure(text='{:>3}'.format(rowData[r]['pos'])if rowData[r]['pos'] > 0 else '')
+            
+            #clock
+            cell = f.grid_slaves(row=gridRow, column=1)
+            cell[0].configure(text='{:02}:{:02}:{:02}'.format(rowData[r]['clock']['hh'], rowData[r]['clock']['mm'], rowData[r]['clock']['ss'])
+             if rowData[r]['status'].get() == FinishTimesInterface.STATUS_FINISHED else '')
+
+            #class
+            cell = f.grid_slaves(row=gridRow, column=2)
+            cell[0].configure(textvariable=rowData[r]['class'])
+
+            #sail number
+            cell = f.grid_slaves(row=gridRow, column=3)
+            cell[0].configure(textvariable=rowData[r]['sailnum'])
+
+            #race
+            cell = f.grid_slaves(row=gridRow, column=4)
+            cell[0].configure(textvariable=rowData[r]['race'])
+
+            #status
+            cell = f.grid_slaves(row=gridRow, column=5)
+            cell[0].configure(textvariable=rowData[r]['status'])
+            if rowData[r]['status'].get() == FinishTimesInterface.STATUS_FINISHED:
+                cell[0].configure(state='disabled')
+            else:
+                cell[0].configure(state='readonly')
+
+            #notes
+            cell = f.grid_slaves(row=gridRow, column=6)
+            cell[0].configure(textvariable=rowData[r]['notes'])
+    
+    def __addFinishRow(self, f):
+        self.rowCount += 1
+        rowNumber = self.rowCount
+        below = 5
+        right = 10
         
-        lTime = Label(self.colFrames[1], 
-            text='{:02}:{:02}:{:02}'.format(rowData['clock']['hh'], rowData['clock']['mm'], rowData['clock']['ss'])
-             if rowData['status'].get() == FinishTimesInterface.STATUS_FINISHED else '', 
-            font=FinishTimesInterface.FIXED_FONT_BOLD)
-        lTime.pack(side=BOTTOM, pady=(above,0))
+        lPos = Label(f, text='', font=FinishTimesInterface.FIXED_FONT)
+        lPos.grid(row=rowNumber, column=0, padx=(0,right), pady=(0,below))
         
-        cbClass = ttk.Combobox(self.colFrames[2], values=self.classNames, textvariable=rowData['class'], width=14)
-        cbClass.pack(side=BOTTOM, pady=(above,0))
+        lTime = Label(f, text='', font=FinishTimesInterface.FIXED_FONT_BOLD)
+        lTime.grid(row=rowNumber, column=1, padx=(0,right), pady=(0,below))
+        
+        cbClass = ttk.Combobox(f, values=self.classNames, width=12)
+        cbClass.grid(row=rowNumber, column=2, padx=(0,right), pady=(0,below))
         cbClass.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         cbClass.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
-        
-        validateNumbers = (self.colFrames[3].register(self.__onlyNumbers), '%S')
-        
-        enSailNum = ttk.Entry(self.colFrames[3], validate='key', validatecommand=validateNumbers, textvariable=rowData['sailnum'], width=14)
-        enSailNum.pack(side=BOTTOM, pady=(above,0))
+              
+        enSailNum = ttk.Entry(f, validate='key', validatecommand=self.validateNumbers, width=12)
+        enSailNum.grid(row=rowNumber, column=3, padx=(0,right), pady=(0,below))
         enSailNum.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         
-        enRaceNum = ttk.Entry(self.colFrames[4], validate='key', validatecommand=validateNumbers, textvariable=rowData['race'], width=4)
-        enRaceNum.pack(side=BOTTOM, pady=(above,0))
+        enRaceNum = ttk.Entry(f, validate='key', validatecommand=self.validateNumbers, width=8)
+        enRaceNum.grid(row=rowNumber, column=4, padx=(0,right), pady=(0,below))
         enRaceNum.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         
-        if rowData['status'].get() == FinishTimesInterface.STATUS_FINISHED:
-            lStatus = Label(self.colFrames[5], text=FinishTimesInterface.STATUS_FINISHED)
-            lStatus.pack(side=BOTTOM, anchor=W, pady=(above,0))
-        else:
-            cbStatus = ttk.Combobox(self.colFrames[5], values=self.statusCodes, textvariable=rowData['status'], state='readonly', width=8)
-            cbStatus.pack(side=BOTTOM, pady=(above,0))
-            cbStatus.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
+        cbStatus = ttk.Combobox(f, values=self.statusCodes, width=8)
+        cbStatus.grid(row=rowNumber, column=5, padx=(0,right), pady=(0,below))
+        cbStatus.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
                             
-        enNotes = ttk.Entry(self.colFrames[6], textvariable=rowData['notes'], width=25)
-        enNotes.pack(side=BOTTOM, pady=(above,0))
+        enNotes = ttk.Entry(f, width=25)
+        enNotes.grid(row=rowNumber, column=6, padx=(0,right), pady=(0,below))
         enNotes.bind('<KeyRelease>', lambda e: self.autoSaveAction())
 
-    def __addFinishHdrRow(self):
-        fileHdr = [['#', E], ['Clock', CENTER], ['Class', W], ['Sail Number', W], ['Race', W], ['Status', W], ['Notes', W]]
+    def __addFinishHdr(self, f):
+        self.rowCount = 0
+        fileHdr = [['#', E+W], ['Clock', E+W], ['Class', W], ['Sail', W], ['Race', W], ['Status', W], ['Notes', W]]
         for i,h in enumerate(fileHdr):
-            l = Label(self.colFrames[i], text=h[0])
-            l.pack(anchor=h[1])
+            l = Label(f, text=h[0])
+            l.grid(row=0, column=i, sticky=h[1])
         
     def __onlyNumbers(self, k):
         if k in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']: return True
@@ -192,10 +234,10 @@ class FinishTimesInterface:
         self.pos = 1
         self.finishData = []
         self.raceNameValue.set('')
-        for c in self.colFrames:
-            for w in c.winfo_children():
-                w.destroy()
-        self.__addFinishHdrRow()
+        f = self.rowFrame
+        for w in f.winfo_children():
+            w.destroy()
+        self.__addFinishHdr(self.rowFrame)
         
     def saveToTxtFileAction(self):
         saveResult = self.__saveToTxtFile()
@@ -221,11 +263,23 @@ class FinishTimesInterface:
                     for c in self.classList:
                         if c['name'].lower().strip() == f['class'].get().lower().strip():
                             rating = str(c['rating'])
-                    lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
-                            f['pos'] if f['pos'] > 0 else '',
-                            f['clock']['hh'] if f['pos'] > 0 else 0,
-                            f['clock']['mm'] if f['pos'] > 0 else 0,
-                            f['clock']['ss'] if f['pos'] > 0 else 0,
+                    if f['pos'] > 0:
+                        lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
+                            f['pos'],
+                            f['clock']['hh'],
+                            f['clock']['mm'],
+                            f['clock']['ss'],
+                            f['class'].get(),
+                            f['sailnum'].get(),
+                            rating,
+                            f['race'].get(),
+                            f['status'].get() if f['status'].get() != FinishTimesInterface.STATUS_FINISHED else '',
+                            f['notes'].get()
+                        )
+                    else:
+                        lineOut = '{}, {}, {}, {}, {}, {}, {}, {}\n'.format(
+                            '',
+                            '',
                             f['class'].get(),
                             f['sailnum'].get(),
                             rating,
