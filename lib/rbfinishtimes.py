@@ -2,8 +2,8 @@ from datetime import datetime
 import json
 import os
 import sched
-from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
-    Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, ttk)
+from tkinter import (ALL, BOTH, BOTTOM, CENTER, END, LEFT, NW, RIGHT, E, SW, W, X, Y,
+    Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, messagebox, ttk)
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
 
@@ -44,11 +44,12 @@ class FinishTimesInterface:
         lf = Frame(f)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
 
+        self.validateNumbers = (lf.register(self.__onlyNumbers), '%S')
+
         #left side lower frame for approaching boats
-        self.abFrame = Frame(lf)
-        self.abFrame.pack(side=BOTTOM, anchor=SW, fill=X)
-        testlabel = Label(self.abFrame, text='test label')
-        testlabel.pack(anchor=W)
+        abFrame = ttk.LabelFrame(lf, text='Approaching Boats')
+        abFrame.pack(side=BOTTOM, anchor=SW, ipadx=4, padx=4, pady=8)
+        self.__drawApproachingBoats(abFrame)
                 
         #header for race details
         self.raceDetailsFrame = Frame(lf)
@@ -79,7 +80,6 @@ class FinishTimesInterface:
         #left-side internal frame for rows of times
         self.rowFrame = Frame(self.finishFrame)
         self.rowFrame.pack(fill=X, expand=True)
-        self.validateNumbers = (self.rowFrame.register(self.__onlyNumbers), '%S')
 
         #right frame (for the buttons etc)
         rf = Frame(f)
@@ -111,7 +111,6 @@ class FinishTimesInterface:
             for row in range(len(asInfo['data'])):
                 self.__addFinishRow(self.rowFrame)
                 if not asInfo['data'][row]['pos'] == 0: self.pos = asInfo['data'][row]['pos'] + 1
-                print('pos is now ', self.pos)
             self.__populateFinishGrid(self.rowFrame, asInfo['data'])
         
     def finishAction(self):
@@ -231,6 +230,7 @@ class FinishTimesInterface:
         return False
         
     def resetFinishBoxAction(self):
+        if not messagebox.askyesno('Reset', 'Are you sure? You should save finish times first.'): return
         self.pos = 1
         self.finishData = []
         self.raceNameValue.set('')
@@ -238,13 +238,13 @@ class FinishTimesInterface:
         for w in f.winfo_children():
             w.destroy()
         self.__addFinishHdr(self.rowFrame)
+        tmpFile = self.__getAutoSaveFileName()
+        if os.path.exists(tmpFile): os.remove(tmpFile)            
         
     def saveToTxtFileAction(self):
         saveResult = self.__saveToTxtFile()
         if saveResult['result']:
             tk.messagebox.showinfo('Save File', saveResult['msg'])
-            tmpFile = self.__getAutoSaveFileName()
-            if os.path.exists(tmpFile): os.remove(tmpFile)            
         else:
             tk.messagebox.showinfo('Save File Error', saveResult['msg'])
         
@@ -346,3 +346,30 @@ class FinishTimesInterface:
         except: # Exception as error:
             return raceInfo
         
+        
+    def __drawApproachingBoats(self, abFrame): 
+        #testlabel = Label(self.abFrame, text='test label')
+        #testlabel.pack(anchor=W)
+        self.abClassList = []
+        self.abSailList = []
+        padRight = 4
+        layout = [2,2]
+        for row in range(layout[0]):
+            for col in range(layout[1]):
+                f = Frame(abFrame, padx=4, pady=4)
+                f.grid(row=row, column=col)
+                lc = Label(f, text="Class")
+                lc.pack(side=LEFT)
+                cStrVar = StringVar()
+                c = ttk.Combobox(f, values=self.classNames, width=10, textvariable=cStrVar)
+                self.abClassList.append(cStrVar)
+                c.pack(side=LEFT, padx=(0,padRight))
+                ls = Label(f, text="Sail")
+                ls.pack(side=LEFT)
+                sStrVar = StringVar()
+                s = ttk.Entry(f, validate='key', validatecommand=self.validateNumbers, width=8, textvariable=sStrVar)
+                self.abSailList.append(sStrVar)
+                s.pack(side=LEFT, padx=(0,padRight))
+                b = ttk.Button(f, text='Finish')
+                b.pack(side=LEFT)
+                
