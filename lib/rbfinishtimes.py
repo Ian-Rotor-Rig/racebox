@@ -54,17 +54,31 @@ class FinishTimesInterface:
         #header for race details
         self.raceDetailsFrame = Frame(lf)
         self.raceDetailsFrame.pack(anchor=W, padx=10, pady=10)
+        
         raceNameFrame = Frame(self.raceDetailsFrame)
         raceNameFrame.pack(pady=(2,12))
+        
         lraceName = Label(raceNameFrame, text='Race name')
         lraceName.pack(side=LEFT, anchor=W)
+        
         self.raceNameValue = StringVar()
-        if len(asInfo['name']) > 0: self.raceNameValue.set(asInfo['name'])
-        enRaceName = ttk.Entry(raceNameFrame, textvariable=self.raceNameValue)
+        if 'name' in asInfo and len(asInfo['name']) > 0: self.raceNameValue.set(asInfo['name'])
+        enRaceName = ttk.Entry(raceNameFrame, textvariable=self.raceNameValue, width=25)
         enRaceName.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         enRaceName.pack(side=LEFT, anchor=W, padx=(4,0))
+        
+        lracedate = Label(raceNameFrame, text='Date')
+        lracedate.pack(side=LEFT, anchor=W, padx=(20,0))
+        
+        now = datetime.now()
+        self.raceDateValue = StringVar(value=now.strftime('%d %b %Y'))            
+        if 'date' in asInfo and len(asInfo['date']) > 0: self.raceDateValue.set(asInfo['date'])
+        enRaceDate = ttk.Entry(raceNameFrame, textvariable=self.raceDateValue, width=12)
+        enRaceDate.bind('<KeyRelease>', lambda e: self.autoSaveAction())
+        enRaceDate.pack(side=LEFT, anchor=W, padx=(4,0))
+        
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
-        lraceTimesTitle.pack(anchor=W, pady=(4,0))
+        lraceTimesTitle.pack(anchor=W, pady=(5,0))
         
         #canvas for scrollable finish times
         self.canvas = Canvas(lf, highlightthickness=0)
@@ -95,7 +109,7 @@ class FinishTimesInterface:
                 
         #right bottom frame (reset and save)
         rbf = LabelFrame(rf, text='Use After Races')
-        rbf.pack(side=BOTTOM, anchor=W, pady=(0,25), ipady=25)
+        rbf.pack(side=BOTTOM, anchor=W, pady=(0,25), ipady=20, ipadx=5)
         #save as file button
         btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
@@ -303,6 +317,7 @@ class FinishTimesInterface:
         saveFileName = self.__getAutoSaveFileName()
         tempFile = {
             'name': self.raceNameValue.get(),
+            'date': self.raceDateValue.get(),
             'data': []
         }
         for rd in self.finishData:
@@ -325,6 +340,7 @@ class FinishTimesInterface:
     def __getAutoSavedFinishData(self):
         raceInfo = {
             'name': '',
+            'data': '',
             'data': []
         }
         tmpFile = self.__getAutoSaveFileName()
@@ -332,6 +348,7 @@ class FinishTimesInterface:
             with open (tmpFile, 'r') as file:
                 tmp = json.load(file)
                 raceInfo['name'] = tmp['name']
+                raceInfo['date'] = tmp['date']
                 for row in tmp['data']:
                     raceInfo['data'].append({
                             'pos': row['pos'],
@@ -344,8 +361,7 @@ class FinishTimesInterface:
                         })
                 return raceInfo
         except: # Exception as error:
-            return raceInfo
-        
+            return raceInfo        
         
     def __drawApproachingBoats(self, abFrame): 
         padGap = 4
