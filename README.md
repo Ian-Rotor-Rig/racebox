@@ -93,11 +93,12 @@ sudo usermod -a -G dialout myusername
 
 The python-hidapi is one way to address HID relays
 
-In Ubuntu, install usbrelay
+In Ubuntu, install usbrelay\
+sudo apt install usbrelay
 
 Then:
 
-sudo usbrelay
+usbrelay
 
 this prints:
 Device Found
@@ -114,10 +115,10 @@ BITFT_2=0
 
 then:
 
-sudo usbrelay BITFT_1=1
+usbrelay BITFT_1=1
 
 turns on the first relay and:
 
-sudo usbrelay BITFT_1=0
+usbrelay BITFT_1=0
 
-turn it off.
+turns it off.
