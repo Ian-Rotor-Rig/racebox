@@ -47,8 +47,8 @@ class FinishTimesInterface:
         self.validateNumbers = (lf.register(self.__onlyNumbers), '%S')
 
         #left side lower frame for approaching boats
-        abFrame = ttk.LabelFrame(lf, text='Approaching Boats')
-        abFrame.pack(side=BOTTOM, anchor=SW, ipadx=4, padx=4, pady=8)
+        abFrame = LabelFrame(lf, text='Approaching Boats', font=FinishTimesInterface.TITLE_FONT)
+        abFrame.pack(side=BOTTOM, anchor=SW, ipadx=4, padx=4, pady=(16,4))
         self.__drawApproachingBoats(abFrame)
                 
         #header for race details
@@ -94,7 +94,7 @@ class FinishTimesInterface:
         btnReset.pack(anchor=W, pady=(50,0))  
                 
         #right bottom frame (reset and save)
-        rbf = LabelFrame(rf, text='Use Between Races')
+        rbf = LabelFrame(rf, text='Use After Races')
         rbf.pack(side=BOTTOM, anchor=W, pady=(0,25), ipady=25)
         #save as file button
         btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
@@ -113,10 +113,10 @@ class FinishTimesInterface:
                 if not asInfo['data'][row]['pos'] == 0: self.pos = asInfo['data'][row]['pos'] + 1
             self.__populateFinishGrid(self.rowFrame, asInfo['data'])
         
-    def finishAction(self):
+    def finishAction(self, abClass='', abSail=''):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
         self.relay.onoff(self.fc, on2Off)
-        finishData = self.__addFinishData()
+        finishData = self.__addFinishData(True, abClass, abSail)
         self.finishData.append(finishData)
         self.pos += 1
         self.autoSaveAction()
@@ -130,19 +130,18 @@ class FinishTimesInterface:
         self.__addFinishRow(self.rowFrame)
         self.__populateFinishGrid(self.rowFrame, self.finishData)
                 
-    def __addFinishData(self, finisher=True):
+    def __addFinishData(self, finisher=True, classValue='', sailValue=''):
         now = datetime.now()
         #finish data for this row
         newFinishData = {
             'pos': self.pos if finisher else 0,
             'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond},
-            'class': StringVar(),
-            'sailnum': StringVar(), #the interface uses a string
-            'race': StringVar(),
+            'class': StringVar(value=classValue),
+            'sailnum': StringVar(value=sailValue), #the interface uses a string
+            'race': StringVar(value='1'),
             'status': StringVar(),
             'notes': StringVar()
         }
-        newFinishData['race'].set('1') #default race number to 1
         if finisher: newFinishData['status'].set('Finished')
         return newFinishData
 
@@ -188,14 +187,15 @@ class FinishTimesInterface:
     def __addFinishRow(self, f):
         self.rowCount += 1
         rowNumber = self.rowCount
-        below = 5
+        below = 4
         right = 10
+        above = 4
         
-        lPos = Label(f, text='', font=FinishTimesInterface.FIXED_FONT)
-        lPos.grid(row=rowNumber, column=0, padx=(0,right), pady=(0,below))
+        lPos = Label(f, text='', font=FinishTimesInterface.FIXED_FONT, justify=RIGHT)
+        lPos.grid(row=rowNumber, column=0, padx=(0,right), pady=(above,below))
         
         lTime = Label(f, text='', font=FinishTimesInterface.FIXED_FONT_BOLD)
-        lTime.grid(row=rowNumber, column=1, padx=(0,right), pady=(0,below))
+        lTime.grid(row=rowNumber, column=1, padx=(0,right), pady=(above,below))
         
         cbClass = ttk.Combobox(f, values=self.classNames, width=12)
         cbClass.grid(row=rowNumber, column=2, padx=(0,right), pady=(0,below))
@@ -348,28 +348,41 @@ class FinishTimesInterface:
         
         
     def __drawApproachingBoats(self, abFrame): 
-        #testlabel = Label(self.abFrame, text='test label')
-        #testlabel.pack(anchor=W)
         self.abClassList = []
         self.abSailList = []
-        padRight = 4
+        padGap = 4
         layout = [2,2]
         for row in range(layout[0]):
             for col in range(layout[1]):
                 f = Frame(abFrame, padx=4, pady=4)
                 f.grid(row=row, column=col)
+                
                 lc = Label(f, text="Class")
-                lc.pack(side=LEFT)
+                lc.pack(side=LEFT, padx=(0,padGap))
+                
                 cStrVar = StringVar()
                 c = ttk.Combobox(f, values=self.classNames, width=10, textvariable=cStrVar)
                 self.abClassList.append(cStrVar)
-                c.pack(side=LEFT, padx=(0,padRight))
+                c.pack(side=LEFT, padx=(0,padGap))
+                
                 ls = Label(f, text="Sail")
-                ls.pack(side=LEFT)
+                ls.pack(side=LEFT, padx=(0,padGap))
+                
                 sStrVar = StringVar()
                 s = ttk.Entry(f, validate='key', validatecommand=self.validateNumbers, width=8, textvariable=sStrVar)
                 self.abSailList.append(sStrVar)
-                s.pack(side=LEFT, padx=(0,padRight))
-                b = ttk.Button(f, text='Finish')
-                b.pack(side=LEFT)
+                s.pack(side=LEFT, padx=(0,padGap))
                 
+                b = ttk.Button(
+                    f,
+                    text='Finish',
+                    command=lambda classRef=cStrVar, sailRef=sStrVar: self.__abFinishAction(classRef, sailRef)
+                )
+                b.pack(side=LEFT, padx=(padGap,0))
+    
+    def __abFinishAction(self, classRef, sailRef):
+        abClass = classRef.get()
+        abSail = sailRef.get()
+        self.finishAction(abClass, abSail)
+        classRef.set('')
+        sailRef.set('')

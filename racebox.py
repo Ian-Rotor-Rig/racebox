@@ -12,7 +12,7 @@ from lib.rbconfig import RaceboxConfig
 # Create the main window
 mainWindow = Tk()
 mainWindow.title('Racebox')
-mainWindow.minsize(width=600, height=500)
+mainWindow.minsize(width=800, height=500)
 
 #default font
 default_font = font.nametofont("TkDefaultFont")
