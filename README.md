@@ -5,7 +5,7 @@ Automated race signals for dinghy racing
 * Supports 10-5-Go and 5-4-1-Go start sequences
 * Has a simple way to record finishes on the "Finish Times" tab
 
-Screenshots and more details are over at the ![Rotor-Rig.com website](https://www.rotor-rig.com/racebox)
+Screenshots and more details are over at the [Rotor-Rig.com website](https://www.rotor-rig.com/racebox)
 
 Currently the common/inexpensive USB serial relays are supported\
 that use the instruction set for the CH340 (or CH341)\
