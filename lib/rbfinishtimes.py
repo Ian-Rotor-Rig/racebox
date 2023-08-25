@@ -348,8 +348,6 @@ class FinishTimesInterface:
         
         
     def __drawApproachingBoats(self, abFrame): 
-        self.abClassList = []
-        self.abSailList = []
         padGap = 4
         layout = [2,2]
         for row in range(layout[0]):
@@ -362,7 +360,6 @@ class FinishTimesInterface:
                 
                 cStrVar = StringVar()
                 c = ttk.Combobox(f, values=self.classNames, width=10, textvariable=cStrVar)
-                self.abClassList.append(cStrVar)
                 c.pack(side=LEFT, padx=(0,padGap))
                 
                 ls = Label(f, text="Sail")
@@ -370,7 +367,6 @@ class FinishTimesInterface:
                 
                 sStrVar = StringVar()
                 s = ttk.Entry(f, validate='key', validatecommand=self.validateNumbers, width=8, textvariable=sStrVar)
-                self.abSailList.append(sStrVar)
                 s.pack(side=LEFT, padx=(0,padGap))
                 
                 b = ttk.Button(
