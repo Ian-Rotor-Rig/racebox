@@ -117,7 +117,7 @@ class SignalsInterface:
 		firstStart = now.replace(hour=config['startHour'], minute=config['startMinute'], second=0, microsecond=0)
 		currentStart = firstStart
 		startInterval = SignalsInterface.sequenceList[sequenceIndex]['interval']
-		for start in range(config['starts']):
+		for _ in range(config['starts']):
 			for warning in SignalsInterface.sequenceList[sequenceIndex]['warning']:
 				warningTime = currentStart - timedelta(minutes=abs(warning))
 				if warningTime not in signalList: signalList.append(warningTime)
@@ -126,10 +126,6 @@ class SignalsInterface:
 				startList.append(currentStart)
 			currentStart = currentStart + timedelta(minutes=startInterval)
 		return [signalList, startList]
-
-		# unpack like this: [signals, starts] = getSignalList(config)
-		# the js rest operator ... is * in Python
-		# so the first/last start would be [firstStart, *otherStarts, lastStart] = starts 
 
 	def __updateCountdownDisplay(self, signals, starts, startCount, seqName):
 		self.lNumberOfStartsValue.config(text=startCount)
