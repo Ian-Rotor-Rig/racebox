@@ -1,6 +1,6 @@
 #from tkinter import *
-from tkinter import (TOP, font, ttk, PhotoImage, Button, messagebox, Frame,
-	BOTTOM, X,Y,BOTH, Tk, Canvas, W,E,N,S,NW, LEFT, RIGHT, CENTER)
+from tkinter import (TOP, font, ttk, PhotoImage,
+	BOTTOM, X, BOTH, Tk, Canvas, W,E,NW, LEFT, RIGHT)
 from lib.rbextras import ExtrasInterface
 from lib.rbfinishtimes import FinishTimesInterface
 from lib.rbsignals import SignalsInterface
@@ -45,14 +45,19 @@ config = RaceboxConfig()
 raceboxRelay = USBHIDRelay()
 serialPort = config.get('Relays', 'serialRelayPort')
 if not raceboxRelay.active: raceboxRelay = USBSerialRelay(serialPort)
-if not raceboxRelay.active: print('no USB relay found')
 
 #header
 headerFrame = ttk.Frame(mainWindow, style='Header.TFrame')
 headerCanvas = Canvas(headerFrame, bg=hdrColour, bd=0, width=50, height=50, highlightthickness=0)
-headerCanvas.grid(column=0,row=0,padx=(0,0), ipady=2, sticky=W)
+headerCanvas.pack(side=LEFT, ipady=2)
 rbLogoSmall = PhotoImage(file='images/racebox50.png')
 headerCanvas.create_image(2,2, anchor=NW, image=rbLogoSmall)
+
+#icon in header to show if a USB relay is connected/recognised
+connectCanvas = Canvas(headerFrame, bg=hdrColour, bd=0, width=25, height=25, highlightthickness=0)
+connectCanvas.pack(side=RIGHT, padx=(0,10))
+connectIcon = PhotoImage(file='images/relay-on.png') if raceboxRelay.active else PhotoImage(file='images/relay-off.png')
+connectCanvas.create_image(0,0, anchor=NW, image=connectIcon)
 
 hdrLabel = ttk.Label(
     headerFrame,
@@ -61,7 +66,7 @@ hdrLabel = ttk.Label(
     background=hdrColour,
     font=('Helvetica', 14, 'bold')
 )
-hdrLabel.grid(column=1,row=0,padx=(0,0))
+hdrLabel.pack(side=LEFT)
 
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
