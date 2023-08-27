@@ -19,7 +19,7 @@ The 1, 2 and 4 channel relays should work. It is not too hard to extend the\
 code in rbrelayconfig.py to support other relays if you have the instruction set.
 
 ## Configuration File
-The configuration file rbconfig.ini is created when the program is started.\
+The configuration file **rbconfig.ini** is created when the program is started.\
 The options are:
 
 \[Signals\]\
@@ -36,7 +36,7 @@ finishfilefolder = /Documents/ (the folder to save finish times documents in)
 
 ## Running Racebox
 Once installed Racebox is run like this:\
-python3 racebox.py
+**python3 racebox.py**
 
 (on Windows it is python rather than python3)
 
@@ -46,12 +46,23 @@ python3.x (latest version)
 ### Windows
 Download the installer available on the python.org website
 
-The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
-The "pip" and "tcl/tk (tkinter)" options should be enabled during installation
+The [Python installer](https://www.python.org/downloads) offers two options:\
+Use admin privileges when installing py.exe and\
+Add python.exe to PATH\
+and you should enable both of these.
 
-In addition to Python, install support for serial and HID relays:\
-python -m pip install pyserial\
-python -m pip install hid
+In addition to Python, install support for serial (via the Command Propmpt):\
+**pip install pyserial**
+
+Then - go to the Device Manager and check which serial port the relay is on.\
+Edit the **rbconfig.ini** file and change the **serialrelayport =** line to match\
+for example, **serialrelayport = COM3**
+
+NB: HID relays on Windows appear to have issues\
+it may be better to choose a USB serial relay (sometimes known as a CH340) for this operating system
+
+The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
+The required "pip" and "tcl/tk (tkinter)" options are normally installed by default.
 
 ### Ubuntu (and many other Linux distros)
 Python3 is usually pre-installed. Check by typing in terminal:\
@@ -63,7 +74,6 @@ sudo apt install python3-pip
 
 #### Required software for serial devices
 pyserial - to install type:
-
 
 sudo apt install python3-serial\
 OR\
@@ -80,7 +90,7 @@ sudo apt remove brltty
 Read these instructions: [PyPi HID](https://pypi.org/project/hid/)
 
 sudo apt install usbrelay\
-(this seems to solve some permissions issues and add the required hidraw package)
+(this seems to solve some permissions issues and adds the required hidraw package)
 
 pip3 install hid\
 (there is no alternative apt package that provides the correct module)
@@ -98,7 +108,7 @@ The python-hidapi is one way to address HID relays
 In Ubuntu, install usbrelay\
 sudo apt install usbrelay
 
-Then:
+Then plug in your relay and type:
 
 usbrelay
 
@@ -124,3 +134,5 @@ turns on the first relay and:
 usbrelay BITFT_1=0
 
 turns it off.
+
+NB usbrelay does not show information for USB serial relays, only HID.
