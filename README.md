@@ -41,7 +41,7 @@ Once installed Racebox is run like this:\
 (on Windows it is python rather than python3)
 
 ## Required software
-python3.x (latest version)
+python3.x (latest version) including pip and tcl/tk (often installed by default)
 
 ### Windows
 Download the installer available on the python.org website
