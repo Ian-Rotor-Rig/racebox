@@ -32,7 +32,7 @@ class FinishTimesInterface:
         self.statusCodes = ['', 'RET', 'OCS', 'DSQ', 'DNF', 'Other']
                 
         #finish data
-        asInfo = self.__getAutoSavedFinishData()
+        asInfo = self.__restoreFinishGridInfo()
         self.finishData = asInfo['data']
         
         self.fc = fControl
@@ -111,7 +111,7 @@ class FinishTimesInterface:
         rbf = LabelFrame(rf, text='Use After Races')
         rbf.pack(side=BOTTOM, anchor=W, pady=(0,25), ipady=20, ipadx=5)
         #save as file button
-        btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToTxtFileAction, style='Custom.TButton')
+        btnReset = ttk.Button(rbf, text="Save Finishes", command=self.saveToFileAction, style='Custom.TButton')
         btnReset.pack(expand=True, anchor=CENTER)          
         #reset counter button
         btnReset = ttk.Button(rbf, text="Reset Finish Box", command=self.resetFinishBoxAction, style='Custom.TButton')
@@ -120,7 +120,7 @@ class FinishTimesInterface:
         #finish times header        
         self.__addFinishHdr(self.rowFrame)
         
-        #autosave data
+        #get the race autosave data (if any) and set up the finish times grid
         if len(asInfo['data']) > 0:
             for row in range(len(asInfo['data'])):
                 self.__addFinishRow(self.rowFrame)
@@ -253,30 +253,40 @@ class FinishTimesInterface:
             w.destroy()
         self.__addFinishHdr(self.rowFrame)
         tmpFile = self.__getAutoSaveFileName()
-        if os.path.exists(tmpFile): os.remove(tmpFile)            
+        if os.path.exists(tmpFile): os.remove(tmpFile)          
         
-    def saveToTxtFileAction(self):
-        saveResult = self.__saveToTxtFile()
-        if saveResult['result']:
-            tk.messagebox.showinfo('Save File', saveResult['msg'])
-        else:
-            tk.messagebox.showinfo('Save File Error', saveResult['msg'])
-        
-    def __saveToTxtFile(self):
+    def __getFinishFileName(self):
         now = datetime.now()
         useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
         defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
-        saveFileName = self.config.get('Files','finishFileFolder') + 'finishes-{}.txt'.format(now.strftime('%Y%m%d-%H%M'))
+        fn = self.config.get('Files','finishFileFolder') + 'finishes-{}'.format(now.strftime('%Y%m%d-%H%M'))
+        return defaultFolder + fn
+        
+    def saveToFileAction(self):
+        saveFileName = self.__getFinishFileName()
+        saveFinishesToCSV = self.__saveToCSVFile(saveFileName + '.csv')
+        if saveFinishesToCSV['result']:
+            tk.messagebox.showinfo('Save File', saveFinishesToCSV['msg'])
+        else:
+            tk.messagebox.showinfo('Save File Error', saveFinishesToCSV['msg'])
+        jsonResult = self.__setJSONFinishData(saveFileName + '.json')
+        if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
+        
+    def __getRating(self, classValue):
+        rating = 0
+        for c in self.classList:
+            if c['name'].lower().strip() == classValue.get().lower().strip(): rating = c['rating']
+        return rating
+        
+    def __saveToCSVFile(self, saveFileName):
         fileHdr = 'Pos, Clock, Class, Sail, Rating, Race, Status, Notes\n'
         try:
-            with open (defaultFolder + saveFileName, 'w+') as file:
+            with open (saveFileName, 'w+') as file:
                 if len(self.raceNameValue.get()) > 0: file.write(self.raceNameValue.get() + '\n')
                 file.write(fileHdr)
                 for f in self.finishData:
-                    rating = ''
-                    for c in self.classList:
-                        if c['name'].lower().strip() == f['class'].get().lower().strip():
-                            rating = str(c['rating'])
+                    rating = str(self.__getRating(f['class']))
+                    if rating == '0': rating = ''
                     if f['pos'] > 0:
                         lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
                             f['pos'],
@@ -302,66 +312,76 @@ class FinishTimesInterface:
                             f['notes'].get()
                         )
                     file.write(lineOut)
-                return {'result': True, 'msg': 'File {}{} saved'.format(defaultFolder, saveFileName)}
+                return {'result': True, 'msg': 'File {} saved'.format(saveFileName)}
         except Exception as error:
-            return {'result': False, 'msg': 'Could not save the file {}{} - {}'.format(defaultFolder, saveFileName, error)}
+            return {'result': False, 'msg': 'Could not save the file {} - {}'.format(saveFileName, error)}
     
     def __getAutoSaveFileName(self):
         homeFolder = os.path.expanduser('~')
         return homeFolder + '/rbautosave.json'
     
     def autoSaveAction(self):
-        self.__autoSaveFinishData()
-            
-    def __autoSaveFinishData(self):
         saveFileName = self.__getAutoSaveFileName()
-        tempFile = {
+        self.__setJSONFinishData(saveFileName)
+            
+    def __setJSONFinishData(self, fileName):
+        finishInfo = {
             'name': self.raceNameValue.get(),
             'date': self.raceDateValue.get(),
             'data': []
         }
         for rd in self.finishData:
+            rating = self.__getRating(rd['class'])
             rd = {
                 'pos': rd['pos'],
                 'clock': rd['clock'],
                 'class': rd['class'].get(),
+                'rating': rating,
                 'sailnum':rd['sailnum'].get(),
                 'race': rd['race'].get(),
                 'status': rd['status'].get(),
                 'notes': rd['notes'].get()
             }
-            tempFile['data'].append(rd)
+            finishInfo['data'].append(rd)
         try:
-            with open (saveFileName, 'w+') as file:
-                file.write(json.dumps(tempFile))
+            with open (fileName, 'w+') as file:
+                file.write(json.dumps(finishInfo))
+                return True
         except Exception as error:
             print(error)
+            return False
             
-    def __getAutoSavedFinishData(self):
-        raceInfo = {
-            'name': '',
-            'data': '',
-            'data': []
-        }
-        tmpFile = self.__getAutoSaveFileName()
+    def __getJSONFinishData(self, fileName):
         try:
-            with open (tmpFile, 'r') as file:
-                tmp = json.load(file)
-                raceInfo['name'] = tmp['name']
-                raceInfo['date'] = tmp['date']
-                for row in tmp['data']:
-                    raceInfo['data'].append({
-                            'pos': row['pos'],
-                            'clock': row['clock'],
-                            'class': StringVar(value=row['class']),
-                            'sailnum': StringVar(value=row['sailnum']),
-                            'race': StringVar(value=row['race']),
-                            'status': StringVar(value=row['status']),
-                            'notes': StringVar(value=row['notes'])
-                        })
-                return raceInfo
-        except: # Exception as error:
-            return raceInfo        
+            with open (fileName, 'r') as file:
+                return json.load(file)
+        except:
+            return {
+            'name': '',
+            'date': '',
+            'data': []
+            }
+        
+    def __restoreFinishGridInfo(self):
+        autoSaveFile = self.__getAutoSaveFileName()
+        autoSaveInfo = self.__getJSONFinishData(autoSaveFile)
+        finishRowList = []
+        for row in autoSaveInfo['data']:
+            finishRowList.append({
+                'pos': row['pos'],
+                'clock': row['clock'],
+                'class': StringVar(value=row['class']),
+                'sailnum': StringVar(value=row['sailnum']),
+                'race': StringVar(value=row['race']),
+                'status': StringVar(value=row['status']),
+                'notes': StringVar(value=row['notes'])
+            })
+        return {
+            'name': autoSaveInfo['name'],
+            'date': autoSaveInfo['date'],
+            'data': finishRowList
+        }
+
         
     def __drawApproachingBoats(self, abFrame): 
         padGap = 4
