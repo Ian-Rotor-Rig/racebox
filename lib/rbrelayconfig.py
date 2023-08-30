@@ -9,6 +9,25 @@ ch340 = {
             ]
     }
 
+# http://www.icstation.com/icstation-micro-channel-relay-module-control-relay-module-icse012a-p-4012.html
+# https://stackoverflow.com/questions/26913755/need-help-understading-sending-bytes-to-serial-port
+# to turn on both channels at the same time: b'\xff' (binary 11111111)
+# x03 turns on both as in binary it is 0011
+# and x05 (0101) turns on ch1 and ch2 off with x06 (0110) turning on ch2 and ch1 off
+# so it is just the rightmost bits in the binary number that matters
+# as xf0 turns both off --> 11110000 in binary
+pl2303 = {
+        'name': 'PL2303 serial relay',
+        'handshake': b'\x50',
+        'activate': b'\x51',
+        'reset': b'\x00',
+        'channel':
+            [
+                {'on': b'\x01', 'off': b'\x00'},
+                {'on': b'\x02', 'off': b'\x00'}
+            ]
+    }
+
 hid16c0 = {
         'name': 'Vendor 16c0 (www.dcttech.com)',
         'channel':
