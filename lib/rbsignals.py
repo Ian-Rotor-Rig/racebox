@@ -7,7 +7,7 @@ class SignalsInterface:
 	sequenceList = [
         {'name': '10-5-Go', 'interval': 5, 'warning': [-10,-5]},
         {'name': '5-4-1-Go', 'interval': 5, 'warning': [-5,-4,-1]},
-        {'name': '3-2-1-Go', 'interval': 1, 'warning': [-3,-2,-1]}
+        {'name': '3-2-1-Go', 'interval': 4, 'warning': [-3,-2,-1]}
     ]
 	#signal status definitions
 	SIGNAL_OLD = 1
