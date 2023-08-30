@@ -65,7 +65,7 @@ Edit the **rbconfig.ini** file and change the **serialrelayport =** line to matc
 for example, **serialrelayport = COM3**
 
 NB: HID relays on Windows appear to have issues\
-it may be better to choose a USB serial relay (sometimes known as a CH340) for this operating system
+it may be better to choose a USB serial relay (such as a CH340) for this operating system
 
 The [Digital Ocean](https://www.digitalocean.com/community/tutorials/install-python-windows-10) guide is excellent\
 The required "pip" and "tcl/tk (tkinter)" options are normally installed by default.
