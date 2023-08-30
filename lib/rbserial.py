@@ -8,23 +8,24 @@
 #
 ###https://stackoverflow.com/questions/44056846/how-to-read-and-write-from-a-com-port-using-pyserial
 #
-
+import time
 try:
     import serial
 except ModuleNotFoundError as error:
     print(str(error))
 
-from lib.rbrelayconfig import ch340
+from lib.rbrelayconfig import ch340, pl2303
 
 class USBSerialRelay:
         	
-    def __init__(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):
+    def __init__(self, port='/dev/ttyUSB0', driver='ch340', rate=9600):
         try:
             self.connection = serial.Serial()
-            self.configure(driver, port, rate)
+            self.configurePort(port, rate)
+            self.configure(driver)
             self.__open()
+            self.initialiseDevice()
         except:
-            print('could not get connection to serial device')
             self.active = False
         
     def __del__(self):
@@ -43,21 +44,29 @@ class USBSerialRelay:
             self.connection.open()
         except:
             self.active = False
-            #print('could not open serial device')
         
     def __close(self):
         if not self.active: return
         self.connection.close()
         
-    def configurePort(self, port='/dev/ttyUSB0', rate=9600, driver=ch340):
-        self.driver = driver
+    def configurePort(self, port='/dev/ttyUSB0', rate=9600):
         self.port = port
         self.rate = rate
         
-    def configure(self, driver=ch340, port='/dev/ttyUSB0', rate=9600):
-        self.driver = driver
-        self.port = port
-        self.rate = rate
+    def configure(self, driverName):
+        self.driverName = driverName
+        if driverName == 'ch340': self.driver = ch340
+        if driverName == 'pl2303': self.driver = pl2303
+        
+    def initialiseDevice(self):
+        if 'handshake' in self.driver: 
+            self.connection.write(self.driver['handshake'])
+            time.sleep(0.25)
+        if 'activate' in self.driver: 
+            self.connection.write(self.driver['activate'])
+        if 'reset' in self.driver: 
+            self.connection.write(self.driver['reset'])
+            self.connection.write(self.driver['reset'])
 
     def isOpen(self):
         if not self.active: return False
@@ -75,12 +84,10 @@ class USBSerialRelay:
         if relayOn: 
             self.off()
             self.__close()
-            #print('off')
             w.after(int(delay*1500), self.onoff, w, delay, count, ch, False)
             return
         if count < 1: return
         self.__open()
-        #print('on')
         self.on()
         count -= 1
         w.after(int(delay*1000), self.onoff, w, delay, count, ch, True)

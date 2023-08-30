@@ -44,7 +44,11 @@ config = RaceboxConfig()
 #USB relay
 raceboxRelay = USBHIDRelay()
 serialPort = config.get('Relays', 'serialRelayPort')
-if not raceboxRelay.active: raceboxRelay = USBSerialRelay(serialPort)
+try:
+    serialDriver = config.get('Relays', 'serialdriver')
+except:
+    serialDriver = False
+if not raceboxRelay.active: raceboxRelay = USBSerialRelay(serialPort) if not serialDriver else USBSerialRelay(serialPort, serialDriver)
 
 #header
 headerFrame = ttk.Frame(mainWindow, style='Header.TFrame')
