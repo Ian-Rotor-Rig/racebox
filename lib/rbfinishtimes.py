@@ -10,6 +10,7 @@ from lib.rbutility import (
         STATUS_FINISHED,
         getAutoSaveFileName,
         getJSONFinishData,
+        saveToCSVFile,
         setJSONFinishData,
         onlyNumbers
     )
@@ -266,7 +267,15 @@ class FinishTimesInterface:
         
     def saveToFileAction(self):
         saveFileName = self.__getFinishFileName()
-        saveFinishesToCSV = self.__saveToCSVFile(saveFileName + '.csv')
+        saveFinishesToCSV = saveToCSVFile(
+                saveFileName + '.csv',
+                {
+                    'name': self.raceNameValue.get(),
+                    'date': self.raceDateValue.get(),
+                    'data': self.finishData
+                },
+                self.classList
+            )
         if saveFinishesToCSV['result']:
             tk.messagebox.showinfo('Save File', saveFinishesToCSV['msg'])
         else:
