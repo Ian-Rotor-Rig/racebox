@@ -6,6 +6,9 @@ from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
 from lib.rbutility import (
+        FIXED_FONT,
+        FIXED_FONT_BOLD,
+        TITLE_FONT,
         STATUS_CODES,
         STATUS_FINISHED,
         getAutoSaveFileName,
@@ -16,10 +19,6 @@ from lib.rbutility import (
     )
 
 class FinishTimesInterface:
-    
-    TITLE_FONT = 'Helvetica 12 bold'
-    FIXED_FONT = 'Courier 12'
-    FIXED_FONT_BOLD = 'Courier 12 bold'
     
     def __init__(self, fControl: ttk.Frame, relay):
         self.pos = 1
@@ -54,7 +53,7 @@ class FinishTimesInterface:
         self.validateNumbers = (lf.register(onlyNumbers), '%S')
 
         #left side lower frame for approaching boats
-        abFrame = LabelFrame(lf, text='Approaching Boats', font=FinishTimesInterface.TITLE_FONT)
+        abFrame = LabelFrame(lf, text='Approaching Boats', font=TITLE_FONT)
         abFrame.pack(side=BOTTOM, anchor=SW, ipadx=4, padx=4, pady=(16,4))
         self.__drawApproachingBoats(abFrame)
                 
@@ -84,7 +83,7 @@ class FinishTimesInterface:
         enRaceDate.bind('<KeyRelease>', lambda e: self.autoSaveAction())
         enRaceDate.pack(side=LEFT, anchor=W, padx=(4,0))
         
-        lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
+        lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=TITLE_FONT)
         lraceTimesTitle.pack(anchor=W, pady=(5,0))
         
         #canvas for scrollable finish times
@@ -212,10 +211,10 @@ class FinishTimesInterface:
         right = 10
         above = 4
         
-        lPos = Label(f, text='', font=FinishTimesInterface.FIXED_FONT, justify=RIGHT)
+        lPos = Label(f, text='', font=FIXED_FONT, justify=RIGHT)
         lPos.grid(row=rowNumber, column=0, padx=(0,right), pady=(above,below))
         
-        lTime = Label(f, text='', font=FinishTimesInterface.FIXED_FONT_BOLD)
+        lTime = Label(f, text='', font=FIXED_FONT_BOLD)
         lTime.grid(row=rowNumber, column=1, padx=(0,right), pady=(above,below))
         
         cbClass = ttk.Combobox(f, values=self.classNames, width=12)

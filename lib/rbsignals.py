@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from tkinter import (Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, NW, W)
 from lib.rbconfig import RaceboxConfig
+from lib.rbutility import ENTRY_FONT, FIXED_FONT_LARGE
 
 class SignalsInterface:
 	sequenceList = [
@@ -17,9 +18,6 @@ class SignalsInterface:
 	SIGNAL_MAX_AGE = 1500 #ms beyond this a signal is too late to be used
 	COUNTDOWN_PRECISION = 500 #ms
  
-	ENTRY_FONT = 'Helvetica 12'
-	FIXED_FONT_LARGE = 'Monospace 14 bold'
-	
 	def __init__(self, fControl: ttk.Frame, relay):
 
 		self.countdownActive = False
@@ -173,7 +171,7 @@ class SignalsInterface:
 			text='00:00:00'
 		)
 		self.lNextStartTime.configure(
-			font=SignalsInterface.FIXED_FONT_LARGE,
+			font=FIXED_FONT_LARGE,
 			bg='plum',
 			padx=12,
 			pady=8
@@ -192,7 +190,7 @@ class SignalsInterface:
 			text='00:00:00'
 		)
 		self.lTime2Start.configure(
-			font=SignalsInterface.FIXED_FONT_LARGE,
+			font=FIXED_FONT_LARGE,
 			bg='orange',
 			padx=12,
 			pady=8
@@ -265,11 +263,11 @@ class SignalsInterface:
 		fStartTime = Frame(f)
 		fStartTime.grid(column=0,row=1,sticky='w') 
 		self.hhValue = Variable(value='14')
-		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhValue, format="%02.0f", state='readonly', font=SignalsInterface.ENTRY_FONT)
+		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
 		hhEntry.pack(side='left')
 		hhEntry.config(width=3)
 		self.mmValue = Variable(value='30')
-		mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmValue, format="%02.0f", state='readonly', font=SignalsInterface.ENTRY_FONT)
+		mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
 		mmEntry.pack(side='left', padx=(4, 0))
 		mmEntry.config(width=3)
 	
@@ -281,7 +279,7 @@ class SignalsInterface:
 		startsLabel.grid(column=0,row=3,sticky='w', pady=(15, 0))
 	
 		self.startsCount = StringVar(value=1)
-		startsEntry = Spinbox(f, from_=1, to=33, textvariable=self.startsCount, state='readonly', font=SignalsInterface.ENTRY_FONT)
+		startsEntry = Spinbox(f, from_=1, to=33, textvariable=self.startsCount, state='readonly', font=ENTRY_FONT)
 		startsEntry.grid(column=0,row=4,sticky='w')
 		startsEntry.config(width=2)
 	
@@ -296,7 +294,7 @@ class SignalsInterface:
 		for s in SignalsInterface.sequenceList: sequenceNames.append(s['name'])
 		### https://www.pythontutorial.net/tkinter/tkinter-combobox/
 		self.selectedSequenceName = StringVar()
-		startSigEntry = ttk.Combobox(f, values=sequenceNames, textvariable=self.selectedSequenceName, state='readonly', font=SignalsInterface.ENTRY_FONT)
+		startSigEntry = ttk.Combobox(f, values=sequenceNames, textvariable=self.selectedSequenceName, state='readonly', font=ENTRY_FONT)
 		defaultSequence = int(self.config.get('Signals', 'defaultSequence'))
 		self.selectedSequenceName.set(sequenceNames[defaultSequence])
 		startSigEntry.grid(column=0,row=6,sticky='w')			

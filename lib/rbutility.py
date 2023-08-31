@@ -1,6 +1,12 @@
 import json
 import os
 
+ENTRY_FONT = 'Helvetica 12'
+TITLE_FONT = 'Helvetica 12 bold'
+FIXED_FONT = 'Courier 12'
+FIXED_FONT_BOLD = 'Courier 12 bold'
+FIXED_FONT_LARGE = 'Monospace 14 bold'    
+
 STATUS_FINISHED = 'Finished'
 
 STATUS_CODES = ['RET', 'OCS', 'DSQ', 'DNF', 'Other']
