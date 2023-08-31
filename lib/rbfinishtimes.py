@@ -1,19 +1,24 @@
 from datetime import datetime
 import json
 import os
-import sched
-from tkinter import (ALL, BOTH, BOTTOM, CENTER, END, LEFT, NW, RIGHT, E, SW, W, X, Y,
+from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
     Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, messagebox, ttk)
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
+from lib.rbutility import (
+        STATUS_CODES,
+        STATUS_FINISHED,
+        getAutoSaveFileName,
+        getJSONFinishData,
+        setJSONFinishData,
+        onlyNumbers
+    )
 
 class FinishTimesInterface:
     
     TITLE_FONT = 'Helvetica 12 bold'
     FIXED_FONT = 'Courier 12'
     FIXED_FONT_BOLD = 'Courier 12 bold'
-    
-    STATUS_FINISHED = 'Finished'
     
     def __init__(self, fControl: ttk.Frame, relay):
         self.pos = 1
@@ -29,7 +34,8 @@ class FinishTimesInterface:
             self.classNames.append(c['name'])
             
         #the list of status codes
-        self.statusCodes = ['', 'RET', 'OCS', 'DSQ', 'DNF', 'Other']
+        self.statusCodes = STATUS_CODES
+        self.statusCodes.insert(0, '')
                 
         #finish data
         asInfo = self.__restoreFinishGridInfo()
@@ -44,7 +50,7 @@ class FinishTimesInterface:
         lf = Frame(f)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
 
-        self.validateNumbers = (lf.register(self.__onlyNumbers), '%S')
+        self.validateNumbers = (lf.register(onlyNumbers), '%S')
 
         #left side lower frame for approaching boats
         abFrame = LabelFrame(lf, text='Approaching Boats', font=FinishTimesInterface.TITLE_FONT)
@@ -172,7 +178,7 @@ class FinishTimesInterface:
             #clock
             cell = f.grid_slaves(row=gridRow, column=1)
             cell[0].configure(text='{:02}:{:02}:{:02}'.format(rowData[r]['clock']['hh'], rowData[r]['clock']['mm'], rowData[r]['clock']['ss'])
-             if rowData[r]['status'].get() == FinishTimesInterface.STATUS_FINISHED else '')
+             if rowData[r]['status'].get() == STATUS_FINISHED else '')
 
             #class
             cell = f.grid_slaves(row=gridRow, column=2)
@@ -189,7 +195,7 @@ class FinishTimesInterface:
             #status
             cell = f.grid_slaves(row=gridRow, column=5)
             cell[0].configure(textvariable=rowData[r]['status'])
-            if rowData[r]['status'].get() == FinishTimesInterface.STATUS_FINISHED:
+            if rowData[r]['status'].get() == STATUS_FINISHED:
                 cell[0].configure(state='disabled')
             else:
                 cell[0].configure(state='readonly')
@@ -238,11 +244,7 @@ class FinishTimesInterface:
         for i,h in enumerate(fileHdr):
             l = Label(f, text=h[0])
             l.grid(row=0, column=i, sticky=h[1])
-        
-    def __onlyNumbers(self, k):
-        if k in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']: return True
-        return False
-        
+               
     def resetFinishBoxAction(self):
         if not messagebox.askyesno('Reset', 'Are you sure? You should save finish times first.'): return
         self.pos = 1
@@ -252,7 +254,7 @@ class FinishTimesInterface:
         for w in f.winfo_children():
             w.destroy()
         self.__addFinishHdr(self.rowFrame)
-        tmpFile = self.__getAutoSaveFileName()
+        tmpFile = getAutoSaveFileName()
         if os.path.exists(tmpFile): os.remove(tmpFile)          
         
     def __getFinishFileName(self):
@@ -269,102 +271,34 @@ class FinishTimesInterface:
             tk.messagebox.showinfo('Save File', saveFinishesToCSV['msg'])
         else:
             tk.messagebox.showinfo('Save File Error', saveFinishesToCSV['msg'])
-        jsonResult = self.__setJSONFinishData(saveFileName + '.json')
+        jsonResult = setJSONFinishData(
+            saveFileName + '.json',
+            {
+                'name': self.raceNameValue.get(),
+                'date': self.raceDateValue.get(),
+                'data': self.finishData
+            },
+            self.classList
+        )
         if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
-        
-    def __getRating(self, classValue):
-        rating = 0
-        for c in self.classList:
-            if c['name'].lower().strip() == classValue.get().lower().strip(): rating = c['rating']
-        return rating
-        
-    def __saveToCSVFile(self, saveFileName):
-        fileHdr = 'Pos, Clock, Class, Sail, Rating, Race, Status, Notes\n'
-        try:
-            with open (saveFileName, 'w+') as file:
-                if len(self.raceNameValue.get()) > 0: file.write(self.raceNameValue.get() + '\n')
-                file.write(fileHdr)
-                for f in self.finishData:
-                    rating = str(self.__getRating(f['class']))
-                    if rating == '0': rating = ''
-                    if f['pos'] > 0:
-                        lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
-                            f['pos'],
-                            f['clock']['hh'],
-                            f['clock']['mm'],
-                            f['clock']['ss'],
-                            f['class'].get(),
-                            f['sailnum'].get(),
-                            rating,
-                            f['race'].get(),
-                            f['status'].get() if f['status'].get() != FinishTimesInterface.STATUS_FINISHED else '',
-                            f['notes'].get()
-                        )
-                    else:
-                        lineOut = '{}, {}, {}, {}, {}, {}, {}, {}\n'.format(
-                            '',
-                            '',
-                            f['class'].get(),
-                            f['sailnum'].get(),
-                            rating,
-                            f['race'].get(),
-                            f['status'].get() if f['status'].get() != FinishTimesInterface.STATUS_FINISHED else '',
-                            f['notes'].get()
-                        )
-                    file.write(lineOut)
-                return {'result': True, 'msg': 'File {} saved'.format(saveFileName)}
-        except Exception as error:
-            return {'result': False, 'msg': 'Could not save the file {} - {}'.format(saveFileName, error)}
-    
-    def __getAutoSaveFileName(self):
-        homeFolder = os.path.expanduser('~')
-        return homeFolder + '/rbautosave.json'
-    
+                
+
+       
     def autoSaveAction(self):
-        saveFileName = self.__getAutoSaveFileName()
-        self.__setJSONFinishData(saveFileName)
-            
-    def __setJSONFinishData(self, fileName):
-        finishInfo = {
-            'name': self.raceNameValue.get(),
-            'date': self.raceDateValue.get(),
-            'data': []
-        }
-        for rd in self.finishData:
-            rating = self.__getRating(rd['class'])
-            rd = {
-                'pos': rd['pos'],
-                'clock': rd['clock'],
-                'class': rd['class'].get(),
-                'rating': rating,
-                'sailnum':rd['sailnum'].get(),
-                'race': rd['race'].get(),
-                'status': rd['status'].get(),
-                'notes': rd['notes'].get()
-            }
-            finishInfo['data'].append(rd)
-        try:
-            with open (fileName, 'w+') as file:
-                file.write(json.dumps(finishInfo))
-                return True
-        except Exception as error:
-            print(error)
-            return False
-            
-    def __getJSONFinishData(self, fileName):
-        try:
-            with open (fileName, 'r') as file:
-                return json.load(file)
-        except:
-            return {
-            'name': '',
-            'date': '',
-            'data': []
-            }
-        
+        saveFileName = getAutoSaveFileName()
+        setJSONFinishData(
+            saveFileName + '.json',
+            {
+                'name': self.raceNameValue.get(),
+                'date': self.raceDateValue.get(),
+                'data': self.finishData
+            },
+            self.classList
+        )
+                              
     def __restoreFinishGridInfo(self):
-        autoSaveFile = self.__getAutoSaveFileName()
-        autoSaveInfo = self.__getJSONFinishData(autoSaveFile)
+        autoSaveFile = getAutoSaveFileName()
+        autoSaveInfo = getJSONFinishData(autoSaveFile)
         finishRowList = []
         for row in autoSaveInfo['data']:
             finishRowList.append({

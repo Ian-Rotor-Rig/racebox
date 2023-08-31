@@ -1,7 +1,7 @@
 #from tkinter import *
 from tkinter import (TOP, font, ttk, PhotoImage,
 	BOTTOM, X, BOTH, Tk, Canvas, W,E,NW, LEFT, RIGHT)
-from lib.rbextras import ExtrasInterface
+from lib.rbsignals2 import Signals2Interface
 from lib.rbfinishtimes import FinishTimesInterface
 from lib.rbsignals import SignalsInterface
 from datetime import datetime
@@ -75,16 +75,19 @@ hdrLabel.pack(side=LEFT)
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
 signalsFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
+manualSignalsFrame = ttk.Frame(n, style='Control.TFrame') #now the manual signals tab
 finishTimesFrame = ttk.Frame(n, style='Control.TFrame')
-extrasFrame = ttk.Frame(n, style='Control.TFrame')
+resultsFrame = ttk.Frame(n, style='Control.TFrame')
+
 n.add(signalsFrame, text='Auto Signals')
-n.add(extrasFrame, text='Manual Signals')
+n.add(manualSignalsFrame, text='Manual Signals')
 n.add(finishTimesFrame, text='Finish Times')
+n.add(resultsFrame, text='Results')
 
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
 FinishTimesInterface(finishTimesFrame, raceboxRelay)
-ExtrasInterface(extrasFrame, raceboxRelay)
+Signals2Interface(manualSignalsFrame, raceboxRelay)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
