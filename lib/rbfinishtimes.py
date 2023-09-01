@@ -79,7 +79,7 @@ class FinishTimesInterface:
         
         now = datetime.now()
         self.raceDayValue = StringVar(
-            value=asInfo['date']['day'] if 'date' in asInfo else now.date
+            value=asInfo['date']['day'] if 'day' in asInfo['date'] else now.date
             )
         enRaceDay = Spinbox(
             raceNameFrame,
@@ -94,7 +94,7 @@ class FinishTimesInterface:
         enRaceDay.pack(side=LEFT, padx=(4,0))
 
         self.raceMonthValue = StringVar(
-            value=MONTH_ABBREV[asInfo['date']['month'] - 1] if 'date' in asInfo else MONTH_ABBREV[now.month - 1]
+            value=MONTH_ABBREV[asInfo['date']['month'] - 1] if 'month' in asInfo['date'] else MONTH_ABBREV[now.month - 1]
             )
         enRaceMonth = ttk.Combobox(
             raceNameFrame,
@@ -108,7 +108,7 @@ class FinishTimesInterface:
         enRaceMonth.pack(side=LEFT, padx=(2,0))
 
         self.raceYearValue = StringVar(
-            value=asInfo['date']['year'] if 'date' in asInfo else now.year
+            value=asInfo['date']['year'] if 'year' in asInfo['date'] else now.year
             )
         enRaceYear = Spinbox(
             raceNameFrame,
