@@ -5,7 +5,9 @@ ENTRY_FONT = 'Helvetica 12'
 TITLE_FONT = 'Helvetica 12 bold'
 FIXED_FONT = 'Courier 12'
 FIXED_FONT_BOLD = 'Courier 12 bold'
-FIXED_FONT_LARGE = 'Monospace 14 bold'    
+FIXED_FONT_LARGE = 'Monospace 14 bold'
+
+MONTH_ABBREV = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 STATUS_FINISHED = 'Finished'
 
@@ -15,17 +17,22 @@ def getJSONFinishData(fileName):
     try:
         with open (fileName, 'r') as file:
             return json.load(file)
-    except:
+    except Exception as error:
+        print(error)
         return {
             'name': '',
-            'date': '',
+            'date': {},
             'data': []
         }
 
 def setJSONFinishData(fileName, finishInfo, classList):
     jsonInfo = {
         'name': finishInfo['name'],
-        'date': finishInfo['date'],
+        'date': {
+            'day': finishInfo['date']['day'],
+            'month': finishInfo['date']['month'],
+            'year': finishInfo['date']['year']
+        },
         'data': []
     }
     for rd in finishInfo['data']:

@@ -2,12 +2,13 @@ from datetime import datetime
 import json
 import os
 from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
-    Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, messagebox, ttk)
+    Canvas, Frame, Label, LabelFrame, Scrollbar, Spinbox, StringVar, messagebox, ttk)
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
 from lib.rbutility import (
         FIXED_FONT,
         FIXED_FONT_BOLD,
+        MONTH_ABBREV,
         TITLE_FONT,
         STATUS_CODES,
         STATUS_FINISHED,
@@ -77,11 +78,49 @@ class FinishTimesInterface:
         lracedate.pack(side=LEFT, anchor=W, padx=(20,0))
         
         now = datetime.now()
-        self.raceDateValue = StringVar(value=now.strftime('%d %b %Y'))            
-        if 'date' in asInfo and len(asInfo['date']) > 0: self.raceDateValue.set(asInfo['date'])
-        enRaceDate = ttk.Entry(raceNameFrame, textvariable=self.raceDateValue, width=12)
-        enRaceDate.bind('<KeyRelease>', lambda e: self.autoSaveAction())
-        enRaceDate.pack(side=LEFT, anchor=W, padx=(4,0))
+        self.raceDayValue = StringVar(
+            value=asInfo['date']['day'] if 'date' in asInfo else now.date
+            )
+        enRaceDay = Spinbox(
+            raceNameFrame,
+            from_=1,
+            to=31,
+            textvariable=self.raceDayValue,
+            format="%02.0f",
+            state='readonly',
+            width=4
+            )
+        self.raceDayValue.trace_add('write', callback=lambda a,b,c: self.autoSaveAction())
+        enRaceDay.pack(side=LEFT, padx=(4,0))
+
+        self.raceMonthValue = StringVar(
+            value=MONTH_ABBREV[asInfo['date']['month'] - 1] if 'date' in asInfo else MONTH_ABBREV[now.month - 1]
+            )
+        enRaceMonth = ttk.Combobox(
+            raceNameFrame,
+            values=MONTH_ABBREV,
+            textvariable=self.raceMonthValue,
+            state='readonly',
+            width=6
+            )
+        enRaceMonth.bind('<KeyRelease>', lambda e: self.autoSaveAction())
+        enRaceMonth.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
+        enRaceMonth.pack(side=LEFT, padx=(2,0))
+
+        self.raceYearValue = StringVar(
+            value=asInfo['date']['year'] if 'date' in asInfo else now.year
+            )
+        enRaceYear = Spinbox(
+            raceNameFrame,
+            from_=2020,
+            to=2999,
+            textvariable=self.raceYearValue,
+            format="%04.0f",
+            state='readonly',
+            width=6
+            )
+        self.raceYearValue.trace_add('write', callback=lambda a,b,c: self.autoSaveAction())
+        enRaceYear.pack(side=LEFT, padx=(2,0))
         
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=TITLE_FONT)
         lraceTimesTitle.pack(anchor=W, pady=(5,0))
@@ -270,7 +309,11 @@ class FinishTimesInterface:
                 saveFileName + '.csv',
                 {
                     'name': self.raceNameValue.get(),
-                    'date': self.raceDateValue.get(),
+                'date': {
+                    'day': self.raceDayValue.get(),
+                    'month': self.raceMonthValue.get(),
+                    'year': self.raceYearValue.get(),
+                },
                     'data': self.finishData
                 },
                 self.classList
@@ -283,22 +326,28 @@ class FinishTimesInterface:
             saveFileName + '.json',
             {
                 'name': self.raceNameValue.get(),
-                'date': self.raceDateValue.get(),
+                'date': {
+                    'day': self.raceDayValue.get(),
+                    'month': MONTH_ABBREV.index(self.raceMonthValue.get()) + 1,
+                    'year': self.raceYearValue.get(),
+                },
                 'data': self.finishData
             },
             self.classList
         )
         if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
-                
-
-       
+                       
     def autoSaveAction(self):
         saveFileName = getAutoSaveFileName()
         setJSONFinishData(
-            saveFileName + '.json',
+            saveFileName,
             {
                 'name': self.raceNameValue.get(),
-                'date': self.raceDateValue.get(),
+                'date': {
+                    'day': self.raceDayValue.get(),
+                    'month': MONTH_ABBREV.index(self.raceMonthValue.get()) + 1,
+                    'year': self.raceYearValue.get(),
+                },
                 'data': self.finishData
             },
             self.classList
@@ -320,7 +369,11 @@ class FinishTimesInterface:
             })
         return {
             'name': autoSaveInfo['name'],
-            'date': autoSaveInfo['date'],
+            'date': {
+                'day': autoSaveInfo['date']['day'],
+                'month': autoSaveInfo['date']['month'],
+                'year': autoSaveInfo['date']['year']
+            } if 'day' in autoSaveInfo['date'] else {},
             'data': finishRowList
         }
 

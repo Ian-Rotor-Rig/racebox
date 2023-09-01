@@ -1,6 +1,7 @@
 #from tkinter import *
 from tkinter import (TOP, font, ttk, PhotoImage,
 	BOTTOM, X, BOTH, Tk, Canvas, W,E,NW, LEFT, RIGHT)
+from lib.rbresults import ResultsInterface
 from lib.rbsignals2 import Signals2Interface
 from lib.rbfinishtimes import FinishTimesInterface
 from lib.rbsignals import SignalsInterface
@@ -86,8 +87,9 @@ n.add(resultsFrame, text='Results')
 
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
-FinishTimesInterface(finishTimesFrame, raceboxRelay)
 Signals2Interface(manualSignalsFrame, raceboxRelay)
+FinishTimesInterface(finishTimesFrame, raceboxRelay)
+ResultsInterface(resultsFrame)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
