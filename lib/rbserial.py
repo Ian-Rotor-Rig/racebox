@@ -14,7 +14,7 @@ try:
 except ModuleNotFoundError as error:
     print(str(error))
 
-from lib.rbrelayconfig import ch340, pl2303
+from lib.rbrelayconfig import ch340, pl2303, ft232r
 
 class USBSerialRelay:
         	
@@ -57,6 +57,7 @@ class USBSerialRelay:
         self.driverName = driverName
         if driverName == 'ch340': self.driver = ch340
         if driverName == 'pl2303': self.driver = pl2303
+        if driverName == 'ft232r': self.driver = ft232r
         
     def initialiseDevice(self):
         if 'handshake' in self.driver: 
