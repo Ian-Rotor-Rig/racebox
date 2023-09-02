@@ -22,7 +22,12 @@ The PL2303 USB serial relay is supported\
 this often has a micro USB socket and www.icstation.com printed underneath\
 and/or "Hong Wei" on the relay components.\
 In rbconfig.ini in the "Relays" section a line must be added for this:\
-**serialrelay = pl2303**
+**serialdriver = pl2303**
+
+The RT232R USB serial relay is supported\
+this is made by [KMTronic](https://www.kmtronic.com/usb-relays.html) using FTDI components\
+In rbconfig.ini in the "Relays" section a line must be added for this:\
+**serialdriver = rt232r**
 
 ## Configuration File
 The configuration file **rbconfig.ini** is created when the program is started.\

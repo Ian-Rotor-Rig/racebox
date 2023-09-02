@@ -8,6 +8,17 @@ ch340 = {
                 {'on': b'\xA0\x04\x01\xA5', 'off': b'\xA0\x04\x00\xA4'}
             ]
     }
+#kmtronic FTDI serial relay
+ft232r = {
+        'name': 'Kmtronic FT232R FTDI serial relay',
+        'channel':
+            [
+                {'on': b'\xFF\x01\x01', 'off': b'\xFF\x01\x00'},
+                {'on': b'\xFF\x02\x01', 'off': b'\xFF\x02\x00'},
+                {'on': b'\xFF\x03\x01', 'off': b'\xFF\x03\x00'},
+                {'on': b'\xFF\x04\x01', 'off': b'\xFF\x04\x00'}
+            ]
+    }
 
 # http://www.icstation.com/icstation-micro-channel-relay-module-control-relay-module-icse012a-p-4012.html
 # https://stackoverflow.com/questions/26913755/need-help-understading-sending-bytes-to-serial-port
