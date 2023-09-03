@@ -7,6 +7,8 @@ Automated race signals for dinghy racing
 
 Screenshots and more details are over at the [Rotor-Rig.com website](https://www.rotor-rig.com/racebox)
 
+More detailed installation and configuration information is in the [wiki](https://github.com/rotor-rig/racebox/wiki)
+
 Currently the common/inexpensive USB serial relays are supported\
 that use the instruction set for the CH340 (or CH341)\
 and some USB HID relays are also supported
