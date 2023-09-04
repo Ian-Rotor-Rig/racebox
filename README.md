@@ -1,5 +1,5 @@
 # Racebox
-Automated race signals for dinghy racing
+Automated race signals and easy finish timing for dinghy racing
 
 * Provides a connection to USB relays in order to control a horn system
 * Supports 10-5-Go, 5-4-1-Go and 3-2-1-Go start sequences
