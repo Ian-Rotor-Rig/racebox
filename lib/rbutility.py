@@ -1,5 +1,9 @@
+from datetime import datetime
 import json
 import os
+import uuid
+
+from lib.rbconfig import RaceboxConfig
 
 ENTRY_FONT = 'Helvetica 12'
 TITLE_FONT = 'Helvetica 12 bold'
@@ -26,6 +30,7 @@ def getJSONFinishData(fileName):
 
 def setJSONFinishData(fileName, finishInfo, classList):
     jsonInfo = {
+        'id': finishInfo['id'],
         'name': finishInfo['name'],
         'date': {
             'day': finishInfo['date']['day'],
@@ -57,7 +62,36 @@ def setJSONFinishData(fileName, finishInfo, classList):
 
 def getAutoSaveFileName():
     homeFolder = os.path.expanduser('~')
-    return homeFolder + '/rbautosave.json'
+    return os.path.join(homeFolder, 'rbautosave.json')
+
+def getUniqueId(convertToString=True):
+    id = uuid.uuid4()
+    return str(id) if convertToString else id
+
+def convertStringToUUID(s):
+    return uuid.UUID(s)
+
+def getDbFileName():
+    config = RaceboxConfig()
+    try:
+        dbFolder = config.get('Files', 'databasefolder')
+    except:
+        dbFolder = os.path.expanduser('~')
+    print('db file is ', os.path.join(dbFolder, 'racebox.db'))
+    return os.path.join(dbFolder, 'racebox.db')
+
+def getFinishFileName(extn):
+    now = datetime.now()
+    fileName = 'finishes-{}'.format(now.strftime('%Y%m%d-%H%M'))
+    config = RaceboxConfig()
+    useDefaultFolder = True if config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
+    defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
+    filesFolder = config.get('Files','finishFileFolder')
+    if useDefaultFolder:
+        #os.path.join throws away anything before an absolute path like filesFolder
+        return defaultFolder + os.path.join(filesFolder, fileName + extn)
+    else:
+        return os.path.join(filesFolder, fileName + extn)
 
 def getRating(classValue, classList):
     rating = 0

@@ -13,7 +13,9 @@ from lib.rbutility import (
         STATUS_CODES,
         STATUS_FINISHED,
         getAutoSaveFileName,
+        getFinishFileName,
         getJSONFinishData,
+        getUniqueId,
         saveToCSVFile,
         setJSONFinishData,
         onlyNumbers
@@ -37,9 +39,11 @@ class FinishTimesInterface:
         #the list of status codes
         self.statusCodes = STATUS_CODES
         self.statusCodes.insert(0, '')
-                
+        
         #finish data
         asInfo = self.__restoreFinishGridInfo()
+        if 'id' in asInfo and len(asInfo['id']) > 0: self.raceId = asInfo['id']
+        else: self.raceId = getUniqueId()
         self.finishData = asInfo['data']
         
         self.fc = fControl
@@ -294,19 +298,12 @@ class FinishTimesInterface:
             w.destroy()
         self.__addFinishHdr(self.rowFrame)
         tmpFile = getAutoSaveFileName()
-        if os.path.exists(tmpFile): os.remove(tmpFile)          
-        
-    def __getFinishFileName(self):
-        now = datetime.now()
-        useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
-        defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
-        fn = self.config.get('Files','finishFileFolder') + 'finishes-{}'.format(now.strftime('%Y%m%d-%H%M'))
-        return defaultFolder + fn
+        if os.path.exists(tmpFile): os.remove(tmpFile)
+        self.raceId = getUniqueId()
         
     def saveToFileAction(self):
-        saveFileName = self.__getFinishFileName()
         saveFinishesToCSV = saveToCSVFile(
-                saveFileName + '.csv',
+                 getFinishFileName('.csv'),
                 {
                     'name': self.raceNameValue.get(),
                 'date': {
@@ -323,8 +320,9 @@ class FinishTimesInterface:
         else:
             tk.messagebox.showinfo('Save File Error', saveFinishesToCSV['msg'])
         jsonResult = setJSONFinishData(
-            saveFileName + '.json',
+            getFinishFileName('.json'),
             {
+                'id': self.raceId,
                 'name': self.raceNameValue.get(),
                 'date': {
                     'day': self.raceDayValue.get(),
@@ -342,6 +340,7 @@ class FinishTimesInterface:
         setJSONFinishData(
             saveFileName,
             {
+                'id': self.raceId,
                 'name': self.raceNameValue.get(),
                 'date': {
                     'day': self.raceDayValue.get(),
@@ -368,6 +367,7 @@ class FinishTimesInterface:
                 'notes': StringVar(value=row['notes'])
             })
         return {
+            'id': autoSaveInfo['id'] if 'id' in autoSaveInfo else '',
             'name': autoSaveInfo['name'],
             'date': {
                 'day': autoSaveInfo['date']['day'],
@@ -376,8 +376,7 @@ class FinishTimesInterface:
             } if 'day' in autoSaveInfo['date'] else {},
             'data': finishRowList
         }
-
-        
+       
     def __drawApproachingBoats(self, abFrame): 
         padGap = 4
         layout = [2,2]

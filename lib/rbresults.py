@@ -1,4 +1,5 @@
 from tkinter import BOTH, RIGHT, Y, Frame, ttk
+from lib.rbdb import rbDb
 
 class ResultsInterface():
        
@@ -17,4 +18,10 @@ class ResultsInterface():
         lMain.pack()
         lRight = ttk.Label(fSideRight, text='Right panel')
         lRight.pack()
+        
+        #the the new db utils
+        db = rbDb()
+        result = db.createTable('test table', ('col1', 'col2'))
+        print('create table result ', result)
+        
         
