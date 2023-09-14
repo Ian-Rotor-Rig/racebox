@@ -33,7 +33,7 @@ class rbDb:
         
     def deleteTable(self, tableName: str):
         if not self.tableExists(tableName): return False
-        self.cursor.execute('DROP TABLE {}'.format(tableName))
+        self.cursor.execute('DROP TABLE "{}"'.format(tableName))
         return True
     
     def saveChanges(self):
@@ -45,18 +45,30 @@ class rbDb:
         else: return True
         
     def addRows(self, tableName: str, grid: list[tuple]):
-        if len(grid) < 1: return
-        if len(grid[0]) < 1: return
-        qry = 'INSERT INTO "{}" VALUES({})'.format(tableName, '?' * len(grid[0]))
+        if len(grid) < 1: return False
+        if len(grid[0]) < 1: return False
+        placeHolders = ''
+        for i in range(len(grid[0])): placeHolders += ', ?' if i > 0 else '?'
+        qry = 'INSERT INTO "{}" VALUES({})'.format(tableName, placeHolders)
+        print('query is ', qry)
         self.cursor.executemany(qry, grid)
+        return True
         
     def addRow(self, tableName: str, row: tuple):
-        qry = 'INSERT INTO "{}" VALUES({})'.format(tableName, '?' * len(row))
+        if len(row) < 1: return False
+        placeHolders = ''
+        for i in range(len(row)): placeHolders += ', ?' if i > 0 else '?'
+        qry = 'INSERT INTO "{}" VALUES({})'.format(tableName, placeHolders)
         self.cursor.execute(qry, row)
+        return True
         
     def removeRows(self, tableName: str, columnName: str, columnValue):
+        if len(columnName) < 1: return False
+        if len(columnValue) < 1: return False
         qry = 'DELETE FROM "{}" WHERE {} = ?'.format(tableName, columnName)
-        self.cursor.execute(qry, columnValue)
+        print('remove rows query is ', qry)
+        self.cursor.execute(qry, (columnValue,))
+        return True
 
     def getRows(self, tableName: str, columnNames: tuple = (), columnValue = ''):
         columnNamesText = '*'
