@@ -1,4 +1,5 @@
 from datetime import datetime
+import glob
 import json
 import os
 import uuid
@@ -16,6 +17,8 @@ MONTH_ABBREV = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 STATUS_FINISHED = 'Finished'
 
 STATUS_CODES = ['RET', 'OCS', 'DSQ', 'DNF', 'Other']
+
+FINISH_FILE_PREFIX = 'finishes-'
 
 def getJSONFinishData(fileName):
     try:
@@ -82,16 +85,25 @@ def getDbFileName():
 
 def getFinishFileName(extn):
     now = datetime.now()
-    fileName = 'finishes-{}'.format(now.strftime('%Y%m%d-%H%M'))
+    fileName = '{}{}'.format(FINISH_FILE_PREFIX, now.strftime('%Y%m%d-%H%M'))
+    filesFolder = getCurrentFilesFolder()
+    #os.path.join throws away anything before an absolute path
+    return os.path.join(filesFolder, fileName + extn)
+
+def getCurrentFilesFolder():
     config = RaceboxConfig()
     useDefaultFolder = True if config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
     defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
     filesFolder = config.get('Files','finishFileFolder')
     if useDefaultFolder:
-        #os.path.join throws away anything before an absolute path like filesFolder
-        return defaultFolder + os.path.join(filesFolder, fileName + extn)
+        return defaultFolder + filesFolder
     else:
-        return os.path.join(filesFolder, fileName + extn)
+        return filesFolder
+    
+def getFileList(folderName, prefix=FINISH_FILE_PREFIX, extn='json', recentFirst=True):
+    fileList = glob.glob(os.path.join(folderName, '{}*.{}'.format(prefix, extn)), recursive = False)
+    fileList.sort(key=os.path.getctime, reverse=recentFirst)
+    return fileList
 
 def getRating(classValue, classList):
     rating = 0

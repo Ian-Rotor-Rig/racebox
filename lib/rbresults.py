@@ -1,5 +1,6 @@
 from tkinter import BOTH, RIGHT, Y, Frame, ttk
 from lib.rbdb import rbDb
+from lib.rbutility import getCurrentFilesFolder, getFileList
 
 class ResultsInterface():
        
@@ -19,7 +20,7 @@ class ResultsInterface():
         lRight = ttk.Label(fSideRight, text='Right panel')
         lRight.pack()
         
-        #the the new db utils
+        #use the new db utils
         db = rbDb()
         result = db.createTable('test table', ('col1', 'col2'))
         print('create table result ', result)
@@ -28,7 +29,7 @@ class ResultsInterface():
         #result = db.addRows('test table',
         #    [
         #        ('some text', 5),
-        #        ('some other text', 99),
+        #        ('some other text', 99),\
         #    ]
         #)
         #print('add rows result ', result)
@@ -39,5 +40,8 @@ class ResultsInterface():
         print('get row data: ', result)
         #result = db.deleteTable('test table')
         #print('delete table result ', result)
+        self.getLastRace()
         
-        
+    def getLastRace(self):
+        fileList = getFileList(getCurrentFilesFolder())
+        for f in fileList: print(f.title())
