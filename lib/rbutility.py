@@ -88,7 +88,7 @@ def getFinishFileName(extn):
     fileName = '{}{}'.format(FINISH_FILE_PREFIX, now.strftime('%Y%m%d-%H%M'))
     filesFolder = getCurrentFilesFolder()
     #os.path.join throws away anything before an absolute path
-    return os.path.join(filesFolder, fileName + extn)
+    return os.path.join(filesFolder, fileName + '.' +  extn)
 
 def getCurrentFilesFolder():
     config = RaceboxConfig()
@@ -96,7 +96,7 @@ def getCurrentFilesFolder():
     defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
     filesFolder = config.get('Files','finishFileFolder')
     if useDefaultFolder:
-        return defaultFolder + filesFolder
+        return os.path.join(defaultFolder, filesFolder)
     else:
         return filesFolder
     

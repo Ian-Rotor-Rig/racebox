@@ -303,7 +303,7 @@ class FinishTimesInterface:
         
     def saveToFileAction(self):
         saveFinishesToCSV = saveToCSVFile(
-                 getFinishFileName('.csv'),
+                 getFinishFileName('csv'),
                 {
                     'name': self.raceNameValue.get(),
                 'date': {
@@ -320,7 +320,7 @@ class FinishTimesInterface:
         else:
             tk.messagebox.showinfo('Save File Error', saveFinishesToCSV['msg'])
         jsonResult = setJSONFinishData(
-            getFinishFileName('.json'),
+            getFinishFileName('json'),
             {
                 'id': self.raceId,
                 'name': self.raceNameValue.get(),

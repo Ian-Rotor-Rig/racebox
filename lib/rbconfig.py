@@ -15,7 +15,7 @@ class RaceboxConfig:
             ['Signals', 'defaultSequence', 0], #the signal sequence selected by default in the interface
             ['Relays', 'serialRelayPort', '/dev/ttyUSB0'], # for Windows, this is probably COM1 (or COM2, COM3 etc)
             ['Files', 'finshFileUseDefaultFolder', True],
-            ['Files', 'finishFileFolder', '/Documents/']
+            ['Files', 'finishFileFolder', 'Documents']
         ]
         configUpdate = False
         for d in defaults:

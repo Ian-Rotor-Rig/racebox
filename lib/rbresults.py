@@ -44,4 +44,5 @@ class ResultsInterface():
         
     def getLastRace(self):
         fileList = getFileList(getCurrentFilesFolder())
-        for f in fileList: print(f.title())
+        #for f in fileList: print(f.title())
+        print('most recent file: ', fileList[0])
