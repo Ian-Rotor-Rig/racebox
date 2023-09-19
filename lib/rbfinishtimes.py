@@ -198,7 +198,7 @@ class FinishTimesInterface:
         #finish data for this row
         newFinishData = {
             'pos': self.pos if finisher else 0,
-            'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond},
+            'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond/1000},
             'class': StringVar(value=classValue),
             'sailnum': StringVar(value=sailValue), #the interface uses a string
             'race': StringVar(value='1'),
@@ -325,16 +325,16 @@ class FinishTimesInterface:
                 'id': self.raceId,
                 'name': self.raceNameValue.get(),
                 'date': {
-                    'day': self.raceDayValue.get(),
+                    'day': int(self.raceDayValue.get()),
                     'month': MONTH_ABBREV.index(self.raceMonthValue.get()) + 1,
-                    'year': self.raceYearValue.get(),
+                    'year': int(self.raceYearValue.get()),
                 },
                 'data': self.finishData
             },
             self.classList
         )
         if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
-                       
+
     def autoSaveAction(self):
         saveFileName = getAutoSaveFileName()
         setJSONFinishData(

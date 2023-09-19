@@ -15,10 +15,21 @@ FIXED_FONT_LARGE = 'Monospace 14 bold'
 MONTH_ABBREV = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 STATUS_FINISHED = 'Finished'
-
 STATUS_CODES = ['RET', 'OCS', 'DSQ', 'DNF', 'Other']
 
-FINISH_FILE_PREFIX = 'finishes-'
+FINISH_FILE_PREFIX = 'rbfinishes-'
+RESULT_DATABASE_NAME = 'racebox.db'
+AUTOSAVE_FILENAME = 'rbautosave.json'
+
+MSEC_IN_MINUTE = 1000 * 60
+MSEC_IN_HOUR = MSEC_IN_MINUTE * 60
+MSEC_IN_DAY = MSEC_IN_HOUR * 24
+
+def dayPostfix(day):
+    if day in [1, 21, 31]:  return 'st'
+    if day in [2, 22]:  return 'nd'
+    if day in [3, 23]:  return 'rd'
+    return 'th'
 
 def getJSONFinishData(fileName):
     try:
@@ -26,6 +37,7 @@ def getJSONFinishData(fileName):
             return json.load(file)
     except Exception as error:
         return {
+            'id': '',
             'name': '',
             'date': {},
             'data': []
@@ -49,8 +61,8 @@ def setJSONFinishData(fileName, finishInfo, classList):
             'clock': rd['clock'],
             'class': rd['class'].get(),
             'rating': rating,
-            'sailnum':rd['sailnum'].get(),
-            'race': rd['race'].get(),
+            'sailnum':int(rd['sailnum'].get()),
+            'race': int(rd['race'].get()),
             'status': rd['status'].get(),
             'notes': rd['notes'].get()
         }
@@ -65,7 +77,7 @@ def setJSONFinishData(fileName, finishInfo, classList):
 
 def getAutoSaveFileName():
     homeFolder = os.path.expanduser('~')
-    return os.path.join(homeFolder, 'rbautosave.json')
+    return os.path.join(homeFolder, AUTOSAVE_FILENAME)
 
 def getUniqueId(convertToString=True):
     id = uuid.uuid4()
@@ -80,8 +92,8 @@ def getDbFileName():
         dbFolder = config.get('Files', 'databasefolder')
     except:
         dbFolder = os.path.expanduser('~')
-    print('db file is ', os.path.join(dbFolder, 'racebox.db'))
-    return os.path.join(dbFolder, 'racebox.db')
+    print('db file is ', os.path.join(dbFolder, RESULT_DATABASE_NAME))
+    return os.path.join(dbFolder, RESULT_DATABASE_NAME)
 
 def getFinishFileName(extn):
     now = datetime.now()
@@ -108,7 +120,7 @@ def getFileList(folderName, prefix=FINISH_FILE_PREFIX, extn='json', recentFirst=
 def getRating(classValue, classList):
     rating = 0
     for c in classList:
-        if c['name'].lower().strip() == classValue.get().lower().strip(): rating = c['rating']
+        if c['name'].lower().strip() == classValue.get().lower().strip(): rating = int(c['rating'])
     return rating
 
 def onlyNumbers(k):
