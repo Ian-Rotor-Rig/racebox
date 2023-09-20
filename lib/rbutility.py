@@ -10,7 +10,7 @@ ENTRY_FONT = 'Helvetica 12'
 TITLE_FONT = 'Helvetica 12 bold'
 FIXED_FONT = 'Courier 12'
 FIXED_FONT_BOLD = 'Courier 12 bold'
-FIXED_FONT_LARGE = 'Monospace 14 bold'
+FIXED_FONT_LARGE = 'Courier 14 bold'
 
 MONTH_ABBREV = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -25,11 +25,14 @@ MSEC_IN_MINUTE = 1000 * 60
 MSEC_IN_HOUR = MSEC_IN_MINUTE * 60
 MSEC_IN_DAY = MSEC_IN_HOUR * 24
 
-def dayPostfix(day):
-    if day in [1, 21, 31]:  return 'st'
-    if day in [2, 22]:  return 'nd'
-    if day in [3, 23]:  return 'rd'
-    return 'th'
+#def dayPostfix(day):
+#    if day in [1, 21, 31]:  return 'st'
+#    if day in [2, 22]:  return 'nd'
+#    if day in [3, 23]:  return 'rd'
+#    return 'th'
+
+def numSuffix(num):
+    return {1: 'st', 2: 'nd', 3: 'rd'}.get(4 if 10 <= num % 100 < 20 else num % 10, 'th') #4 could be any number > 3
 
 def getJSONFinishData(fileName):
     try:
@@ -61,7 +64,7 @@ def setJSONFinishData(fileName, finishInfo, classList):
             'clock': rd['clock'],
             'class': rd['class'].get(),
             'rating': rating,
-            'sailnum':int(rd['sailnum'].get()),
+            'sailnum':rd['sailnum'].get(),
             'race': int(rd['race'].get()),
             'status': rd['status'].get(),
             'notes': rd['notes'].get()

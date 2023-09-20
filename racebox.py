@@ -37,7 +37,10 @@ s.configure('Header.TFrame', background=hdrColour)
 s.configure('Footer.TFrame', background=ftrColour)
 s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
 s.configure('TNotebook.Tab', background='limegreen', padding=[8,4])
-s.configure('Custom.TButton', background='silver', padding=(8,4))
+s.configure('Custom.TButton', background='silver', padding=(8,8,8,6)) #left top right bottom 
+s.configure('H12Bold.TLabel', font=('Helvetica','12', 'bold'))
+s.configure('Def12Bold.TLabel', font=('TkDefaultFont','12', 'bold'))
+s.configure('Courier14Bold.TLabel', font=('Courier','14', 'bold'))
 
 #general config
 config = RaceboxConfig()

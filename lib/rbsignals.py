@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from tkinter import (Frame, Label, Spinbox, StringVar,
+from tkinter import (NSEW, Frame, Label, Spinbox, StringVar,
 	Variable, ttk, BOTH, NW, W)
 from lib.rbconfig import RaceboxConfig
 from lib.rbutility import ENTRY_FONT, FIXED_FONT_LARGE
@@ -164,36 +164,30 @@ class SignalsInterface:
 			f,
 			text='Next Start Time'
 		)
-		lNextStartTxt.grid(column=0,row=0,sticky='w')
+		lNextStartTxt.grid(column=0,row=0,sticky=W)
 		
-		self.lNextStartTime = Label(
+		self.lNextStartTime = ttk.Label(
 			f,
-			text='00:00:00'
+			text='00:00:00',
+			style='Courier14Bold.TLabel',
+			background='plum',
+			padding=(8,12,8,4) #left top right bottom
 		)
-		self.lNextStartTime.configure(
-			font=FIXED_FONT_LARGE,
-			bg='plum',
-			padx=12,
-			pady=8
-		)
-		self.lNextStartTime.grid(column=1,row=0)
+		self.lNextStartTime.grid(column=1,row=0, pady=(4,4))
 		
 		#countdown to next start label
 		lTime2StartTxt = Label(
 			f,
 			text='Time To Start'
 		)
-		lTime2StartTxt.grid(column=0,row=1,sticky='w')
+		lTime2StartTxt.grid(column=0,row=1,sticky=W)
 		
-		self.lTime2Start = Label(
+		self.lTime2Start = ttk.Label(
 			f,
-			text='00:00:00'
-		)
-		self.lTime2Start.configure(
-			font=FIXED_FONT_LARGE,
-			bg='orange',
-			padx=12,
-			pady=8
+			text='00:00:00',
+			style='Courier14Bold.TLabel',
+			background='orange',
+			padding=(8,12,8,4) #left top right bottom   
 		)
 		self.lTime2Start.grid(column=1,row=1)
 		
@@ -202,66 +196,66 @@ class SignalsInterface:
 			f,
 			text='Number Of Starts'
 		)
-		lNumberOfStartsTxt.grid(column=0,row=2,sticky='w')		
+		lNumberOfStartsTxt.grid(column=0,row=2,sticky=W)		
 		self.lNumberOfStartsValue = Label(
 			f,
 			text='0',
 			anchor=W
 		)
-		self.lNumberOfStartsValue.grid(column=1,row=2,sticky='w')	
+		self.lNumberOfStartsValue.grid(column=1,row=2,sticky=W)	
 		
 		#final start time plain label
 		lLastStartTxt = Label(
 			f,
 			text='Final Start Time'
 		)
-		lLastStartTxt.grid(column=0,row=3,sticky='w')		
+		lLastStartTxt.grid(column=0,row=3,sticky=W)		
 		self.lLastStartValue = Label(
 			f,
 			text='00:00:00',
 			anchor=W
 		)
-		self.lLastStartValue.grid(column=1,row=3,sticky='w')	
+		self.lLastStartValue.grid(column=1,row=3,sticky=W)	
   
 		#start sequence
 		lSequenceTxt = Label(
 			f,
 			text='Sequence'
 		)
-		lSequenceTxt.grid(column=0,row=4,sticky='w')		
+		lSequenceTxt.grid(column=0,row=4,sticky=W)		
 		self.lSequenceValue = Label(
 			f,
 			text='',
 			anchor=W
 		)
-		self.lSequenceValue.grid(column=1,row=4,sticky='w')	  
+		self.lSequenceValue.grid(column=1,row=4,sticky=W)	  
 		
 		#general recall/add start button
 		lAddStartTxt = Label(
 			f,
 			text='General Recall'
 		)
-		lAddStartTxt.grid(column=0,row=5,sticky='w')		
+		lAddStartTxt.grid(column=0,row=5,sticky=W)		
 		lAddStartBtn = ttk.Button(
 			f,
 			text='Add Start',
    			command=self.__addStart,
    			style='Custom.TButton'
 		)
-		lAddStartBtn.grid(column=1,row=5,sticky='w')	
+		lAddStartBtn.grid(column=1,row=5,sticky=W)	
 
 	def __initConfigInterface(self, f: ttk.Frame):
 		# start time
 		fStartTime = Frame(f)
-		fStartTime.grid(column=0,row=0,sticky='w') 
+		fStartTime.grid(column=0,row=0,sticky=W) 
 		startTimeLabel = Label(
 			fStartTime,
 			text='First Start'
 		)
-		startTimeLabel.grid(column=0,row=0,sticky='w') 
+		startTimeLabel.grid(column=0,row=0,sticky=W) 
 	
 		fStartTime = Frame(f)
-		fStartTime.grid(column=0,row=1,sticky='w') 
+		fStartTime.grid(column=0,row=1,sticky=W) 
 		self.hhValue = Variable(value='14')
 		hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
 		hhEntry.pack(side='left')
@@ -297,5 +291,5 @@ class SignalsInterface:
 		startSigEntry = ttk.Combobox(f, values=sequenceNames, textvariable=self.selectedSequenceName, state='readonly', font=ENTRY_FONT)
 		defaultSequence = int(self.config.get('Signals', 'defaultSequence'))
 		self.selectedSequenceName.set(sequenceNames[defaultSequence])
-		startSigEntry.grid(column=0,row=6,sticky='w')			
+		startSigEntry.grid(column=0,row=6,sticky=W)			
 			
