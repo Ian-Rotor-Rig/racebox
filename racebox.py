@@ -91,8 +91,8 @@ n.add(resultsFrame, text='Results')
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
 Signals2Interface(manualSignalsFrame, raceboxRelay)
-FinishTimesInterface(finishTimesFrame, raceboxRelay)
-ResultsInterface(resultsFrame)
+ft = FinishTimesInterface(finishTimesFrame, raceboxRelay)
+ResultsInterface(resultsFrame, ft)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')

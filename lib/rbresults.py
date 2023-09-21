@@ -1,7 +1,7 @@
-#import json
-from tkinter import ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, Canvas, Frame, PhotoImage, Scrollbar, StringVar, ttk
+from tkinter import ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, Canvas, Frame, PhotoImage, Scrollbar, Spinbox, Variable, ttk
 from lib.rbdb import rbDb
 from lib.rbutility import (
+        ENTRY_FONT,
         MONTH_ABBREV, 
         MSEC_IN_DAY, MSEC_IN_HOUR, MSEC_IN_MINUTE,
         STATUS_FINISHED,
@@ -11,24 +11,28 @@ from lib.rbutility import (
 
 class ResultsInterface():
        
-    def __init__(self, fControl: ttk.Frame):
+    def __init__(self, fControl: ttk.Frame, fTimes):
+        self.fTimes = fTimes
         self.fHdr = Frame(fControl, bg='orange')
         fMain = Frame(fControl)
         self.fSideRight = Frame(fControl, bg='palegreen')
         self.fHdr.pack(expand=False, fill=BOTH, padx=(2,2), pady=(2,2))
-        self.fSideRight.pack(side=RIGHT, expand=False, fill=Y, padx=(2,2), pady=(10,2))
+        #self.fSideRight.pack(side=RIGHT, expand=False, fill=Y, padx=(2,2), pady=(10,2))
         fMain.pack(expand=True, fill=BOTH, padx=(2,2), pady=(10,2))
         
         #identify frames using some labels
-        lHdr = ttk.Label(self.fHdr, text='Header')
-        lHdr.pack()
+        #lHdr = ttk.Label(self.fHdr, text='Header')
+        #lHdr.pack()
         #lMain = ttk.Label(fMain, text='Main panel')
         #lMain.pack()
-        lRight = ttk.Label(self.fSideRight, text='Right panel')
-        lRight.pack()
+        #lRight = ttk.Label(self.fSideRight, text='Right panel')
+        #lRight.pack()
+        
+        #create the control panel
+        self.showControlPanel()
         
         #create the scrollable canvas
-        fResultsArea = Frame(fMain, bg='aqua')
+        fResultsArea = Frame(fMain)
         fResultsArea.pack(expand=True, fill=BOTH)
         canvas = Canvas(fResultsArea , highlightthickness=0)
         sb = Scrollbar(fResultsArea , orient='vertical', command=canvas.yview)
@@ -66,17 +70,13 @@ class ResultsInterface():
     def getRecentFinishFile(self):
         fileList = getFileList(getCurrentFilesFolder())
         if len(fileList) < 1:
-            #print('no recent files found')
             return False
-        #for f in fileList: print(f.title())
-        print('most recent file: ', fileList[0])
-        #recentRace = json.dumps(getJSONFinishData(fileList[0]), indent=2)
-        #print(recentRace)
         recentRaceData = getJSONFinishData(fileList[0])
         return recentRaceData
     
-    def getSortedRaceData(self, raceNumber):
-        raceInfo = self.getRecentFinishFile()
+    def getSortedRaceData(self, raceNumber, useFinishFile=False):
+        if useFinishFile: raceInfo = self.getRecentFinishFile()
+        else: raceInfo = self.fTimes.getCurrentFinishData()
         if not raceInfo: return False
         TOTALMS = 'finishms'
         finishData = list(raceInfo['data'])
@@ -111,8 +111,8 @@ class ResultsInterface():
         racePadY = (2,2)
 
         #icon
-        #editIcon = PhotoImage(file='images/edit20.png') #must use self on PhotoImage
-        #weird, but necessary
+        #editIcon = PhotoImage(file='images/edit16.png')
+        #weird, but necessary otherwise editIcon is garbage-collected
         #lEditIcon = ttk.Label(image=editIcon)
         #lEditIcon.image = editIcon
                       
@@ -121,7 +121,7 @@ class ResultsInterface():
         lRaceTitle.grid(row=0, column=0, columnspan=8, sticky=W)
 
         #show race number
-        lRaceNum = ttk.Label(self.fResults, text='{}{} start'.format(raceNumber, numSuffix(raceNumber)))
+        lRaceNum = ttk.Label(self.fResults, text='{}{} Start'.format(raceNumber, numSuffix(raceNumber)))
         lRaceNum.grid(row=2, column=0, columnspan=8, sticky=W)
         
         #show race date
@@ -143,16 +143,22 @@ class ResultsInterface():
         #display the results for each boat
         startRow = 4
         for i,d in enumerate(raceInfo['data']):
-           lPos = ttk.Label(self.fResults, text=i+1, anchor=W)
-           lPos.grid(row=i+startRow, column=0, sticky=E, padx=racePadX, pady=racePadY)
+            #add an edit button
+            #bEdit = ttk.Button(self.fResults, image=editIcon, command=lambda x = i: self.EditEntry(x), padding=(0,0))
+            #bEdit.grid(row=i+startRow, column=0)
+           
+            #pos
+            lbl = ttk.Label(self.fResults, text=i+1, anchor=W, foreground='blue', borderwidth=2, relief='groove', padding=(8,1), takefocus=True)
+            lbl.bind('<Button-1>', lambda _, x = i: self.EditEntry(x))
+            lbl.grid(row=i+startRow, column=0, sticky=E, padx=racePadX, pady=racePadY)
 
-           lPos = ttk.Label(self.fResults, text=d['class'], anchor=W)
-           lPos.grid(row=i+startRow, column=1, sticky=W, padx=racePadX, pady=racePadY)
+            lbl = ttk.Label(self.fResults, text=' '.join(d['class'].split()).strip(), anchor=W)
+            lbl.grid(row=i+startRow, column=1, sticky=W, padx=racePadX, pady=racePadY)
 
-           lPos = ttk.Label(self.fResults, text=d['sailnum'], anchor=W)
-           lPos.grid(row=i+startRow, column=2, sticky=W, padx=racePadX, pady=racePadY)
+            lbl = ttk.Label(self.fResults, text=d['sailnum'], anchor=W)
+            lbl.grid(row=i+startRow, column=2, sticky=W, padx=racePadX, pady=racePadY)
 
-           lPos = ttk.Label(self.fResults,
+            lbl = ttk.Label(self.fResults,
                     text='{:02}:{:02}:{:02}'.format(
                         d['clock']['hh'],
                         d['clock']['mm'],
@@ -160,21 +166,29 @@ class ResultsInterface():
                     ) if d['status'] == STATUS_FINISHED else d['status'],
                     anchor=W
                 )
-           lPos.grid(row=i+startRow, column=3, sticky=W, padx=racePadX, pady=racePadY)
+            lbl.grid(row=i+startRow, column=3, sticky=W, padx=racePadX, pady=racePadY)
 
-           lPos = ttk.Label(
+            rating = '' if d['rating'] == 0 else d['rating']
+            lbl = ttk.Label(
                self.fResults,
-               text=d['rating'],
+               text=rating,
                anchor=W
             )
-           lPos.grid(row=i+startRow, column=4, sticky=E, padx=racePadX, pady=racePadY)
-           
-           #add an edit button
-           #bEdit = ttk.Button(self.fResults, image=editIcon)
-           #bEdit.grid(row=i+startRow, column=5, padx=racePadX, pady=0)
-           #bEdit = ttk.Checkbutton(self.fResults, text='')
-           #bEdit.grid(row=i+startRow, column=5, padx=racePadX, pady=0)
-           bEditValue = StringVar()
-           bEdit = ttk.Radiobutton(self.fResults, text='', variable=bEditValue, command=lambda x = i: self.EditEntry(x))
-           bEdit.grid(row=i+startRow, column=5, padx=racePadX, pady=0)
-           
+            lbl.grid(row=i+startRow, column=4, sticky=E, padx=racePadX, pady=racePadY)
+                      
+    def showControlPanel(self):
+        #self.fHdr
+        fControl = Frame(self.fHdr)
+        fControl.pack(side=LEFT)
+        
+        #test label
+        #lbl = ttk.Label(fControl,text='Test Label')
+        #lbl.pack()
+        
+        #start number
+        spLbl = ttk.Label(fControl, text='Start')
+        spLbl.pack(side=LEFT)
+        spValue = Variable(value=1)
+        spStart = Spinbox(fControl, from_=0, to=99, textvariable=spValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
+        spStart.pack(side=LEFT)
+        spStart.config(width=3)

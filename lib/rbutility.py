@@ -46,19 +46,19 @@ def getJSONFinishData(fileName):
             'data': []
         }
 
-def setJSONFinishData(fileName, finishInfo, classList):
-    jsonInfo = {
-        'id': finishInfo['id'],
-        'name': finishInfo['name'],
-        'date': {
-            'day': finishInfo['date']['day'],
-            'month': finishInfo['date']['month'],
-            'year': finishInfo['date']['year']
-        },
-        'data': []
-    }
+def setJSONFinishData(fileName, finishInfo):
+    try:
+        with open (fileName, 'w+') as file:
+            file.write(json.dumps(finishInfo))
+            return True
+    except Exception as error:
+        print(error)
+        return False
+    
+def processFinishInfo(finishInfo, classList):
+    finishList = []
     for rd in finishInfo['data']:
-        rating = getRating(rd['class'], classList)
+        rating = getRating(rd['class'].get(), classList)
         rd = {
             'pos': rd['pos'],
             'clock': rd['clock'],
@@ -69,15 +69,9 @@ def setJSONFinishData(fileName, finishInfo, classList):
             'status': rd['status'].get(),
             'notes': rd['notes'].get()
         }
-        jsonInfo['data'].append(rd)
-    try:
-        with open (fileName, 'w+') as file:
-            file.write(json.dumps(jsonInfo))
-            return True
-    except Exception as error:
-        print(error)
-        return False
-
+        finishList.append(rd)
+    return {**finishInfo, 'data': finishList}
+        
 def getAutoSaveFileName():
     homeFolder = os.path.expanduser('~')
     return os.path.join(homeFolder, AUTOSAVE_FILENAME)
@@ -121,47 +115,49 @@ def getFileList(folderName, prefix=FINISH_FILE_PREFIX, extn='json', recentFirst=
     return fileList
 
 def getRating(classValue, classList):
+    # https://stackoverflow.com/questions/8270092/remove-all-whitespace-in-a-string/8270124#8270124
     rating = 0
+    cv = ''.join(classValue.split()).lower()
     for c in classList:
-        if c['name'].lower().strip() == classValue.get().lower().strip(): rating = int(c['rating'])
+        if ''.join(c['name'].split()).lower() == cv: rating = int(c['rating'])
     return rating
 
 def onlyNumbers(k):
     if k in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']: return True
     return False
 
-def saveToCSVFile(saveFileName, finishInfo, classList):
+def saveToCSVFile(saveFileName, finishInfo):
     fileHdr = 'Pos, Clock, Class, Sail, Rating, Race, Status, Notes\n'
     try:
         with open (saveFileName, 'w+') as file:
             if len(finishInfo['name']) > 0: file.write(finishInfo['name'] + '\n')
             file.write(fileHdr)
             for f in finishInfo['data']:
-                rating = str(getRating(f['class'], classList))
-                if rating == '0': rating = ''
+                rating = '' if f['rating'] == 0 else f['rating']
+                status = '' if f['status'] == STATUS_FINISHED else f['status']
                 if f['pos'] > 0:
                     lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
                         f['pos'],
                         f['clock']['hh'],
                         f['clock']['mm'],
                         f['clock']['ss'],
-                        f['class'].get(),
-                        f['sailnum'].get(),
+                        f['class'],
+                        f['sailnum'],
                         rating,
-                        f['race'].get(),
-                        f['status'].get() if f['status'].get() != STATUS_FINISHED else '',
-                        f['notes'].get()
+                        f['race'],
+                        status,
+                        f['notes']
                     )
                 else:
                     lineOut = '{}, {}, {}, {}, {}, {}, {}, {}\n'.format(
                         '',
                         '',
-                        f['class'].get(),
-                        f['sailnum'].get(),
+                        f['class'],
+                        f['sailnum'],
                         rating,
-                        f['race'].get(),
-                        f['status'].get() if f['status'].get() != STATUS_FINISHED else '',
-                        f['notes'].get()
+                        f['race'],
+                        status,
+                        f['notes']
                     )
                 file.write(lineOut)
             return {'result': True, 'msg': 'File {} saved'.format(saveFileName)}

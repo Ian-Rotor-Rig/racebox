@@ -16,6 +16,7 @@ from lib.rbutility import (
         getFinishFileName,
         getJSONFinishData,
         getUniqueId,
+        processFinishInfo,
         saveToCSVFile,
         setJSONFinishData,
         onlyNumbers
@@ -302,18 +303,10 @@ class FinishTimesInterface:
         self.raceId = getUniqueId()
         
     def saveToFileAction(self):
+        processedFinishInfo = self.getCurrentFinishData()
         saveFinishesToCSV = saveToCSVFile(
-                 getFinishFileName('csv'),
-                {
-                    'name': self.raceNameValue.get(),
-                'date': {
-                    'day': self.raceDayValue.get(),
-                    'month': self.raceMonthValue.get(),
-                    'year': self.raceYearValue.get(),
-                },
-                    'data': self.finishData
-                },
-                self.classList
+            getFinishFileName('csv'),
+            processedFinishInfo,
             )
         if saveFinishesToCSV['result']:
             tk.messagebox.showinfo('Save File', saveFinishesToCSV['msg'])
@@ -321,17 +314,7 @@ class FinishTimesInterface:
             tk.messagebox.showinfo('Save File Error', saveFinishesToCSV['msg'])
         jsonResult = setJSONFinishData(
             getFinishFileName('json'),
-            {
-                'id': self.raceId,
-                'name': self.raceNameValue.get(),
-                'date': {
-                    'day': int(self.raceDayValue.get()),
-                    'month': MONTH_ABBREV.index(self.raceMonthValue.get()) + 1,
-                    'year': int(self.raceYearValue.get()),
-                },
-                'data': self.finishData
-            },
-            self.classList
+            processedFinishInfo,
         )
         if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
 
@@ -339,13 +322,17 @@ class FinishTimesInterface:
         saveFileName = getAutoSaveFileName()
         setJSONFinishData(
             saveFileName,
-            {
+            self.getCurrentFinishData()
+        )
+        
+    def getCurrentFinishData(self):
+        return processFinishInfo({
                 'id': self.raceId,
                 'name': self.raceNameValue.get(),
                 'date': {
-                    'day': self.raceDayValue.get(),
+                    'day': int(self.raceDayValue.get()),
                     'month': MONTH_ABBREV.index(self.raceMonthValue.get()) + 1,
-                    'year': self.raceYearValue.get(),
+                    'year': int(self.raceYearValue.get()),
                 },
                 'data': self.finishData
             },
