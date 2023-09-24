@@ -1,7 +1,5 @@
-#from tkinter import *
 from tkinter import (TOP, font, ttk, PhotoImage,
 	BOTTOM, X, BOTH, Tk, Canvas, W,E,NW, LEFT, RIGHT)
-from lib.rbresults import ResultsInterface
 from lib.rbsignals2 import Signals2Interface
 from lib.rbfinishtimes import FinishTimesInterface
 from lib.rbsignals import SignalsInterface
@@ -13,11 +11,13 @@ from lib.rbconfig import RaceboxConfig
 # Create the main window
 mainWindow = Tk()
 mainWindow.title('Racebox')
-mainWindow.minsize(width=800, height=500)
+mainWindow.minsize(width=1000, height=500)
 
 #default font
-default_font = font.nametofont("TkDefaultFont")
+default_font = font.nametofont('TkDefaultFont')
 default_font.configure(size=12)
+text_font = font.nametofont('TkTextFont')
+text_font.configure(size=12)
 
 # window icon
 icon = PhotoImage(file='images/racebox192.png')
@@ -36,11 +36,12 @@ s.configure('Setup.TFrame', borderwidth=4, relief='flat')
 s.configure('Header.TFrame', background=hdrColour)
 s.configure('Footer.TFrame', background=ftrColour)
 s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
+s.configure('Results.TNotebook', tabposition='se', background='indigo')
 s.configure('TNotebook.Tab', background='limegreen', padding=[8,4])
 s.configure('Custom.TButton', background='silver', padding=(8,8,8,6)) #left top right bottom 
 s.configure('H12Bold.TLabel', font=('Helvetica','12', 'bold'))
 s.configure('Def12Bold.TLabel', font=('TkDefaultFont','12', 'bold'))
-s.configure('Courier14Bold.TLabel', font=('Courier','14', 'bold'))
+s.configure('CourierLargeBold.TLabel', font=('Courier','16', 'bold'))
 
 #general config
 config = RaceboxConfig()
@@ -91,8 +92,8 @@ n.add(resultsFrame, text='Results')
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
 Signals2Interface(manualSignalsFrame, raceboxRelay)
-ft = FinishTimesInterface(finishTimesFrame, raceboxRelay)
-ResultsInterface(resultsFrame, ft)
+ft = FinishTimesInterface(finishTimesFrame, resultsFrame, raceboxRelay)
+#ResultsInterface(resultsFrame, ft)
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')

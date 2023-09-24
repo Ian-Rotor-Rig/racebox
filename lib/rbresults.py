@@ -1,18 +1,19 @@
-from tkinter import ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, Canvas, Frame, PhotoImage, Scrollbar, Spinbox, Variable, ttk
+from tkinter import ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, Canvas, Frame, Scrollbar, Spinbox, Variable, ttk
 from lib.rbdb import rbDb
 from lib.rbutility import (
         ENTRY_FONT,
         MONTH_ABBREV, 
         MSEC_IN_DAY, MSEC_IN_HOUR, MSEC_IN_MINUTE,
         STATUS_FINISHED,
-        getCurrentFilesFolder, getFileList, getJSONFinishData,
+        getCurrentFilesFolder,
+        getFileList,
+        getJSONFinishData,
         numSuffix,
     )
 
 class ResultsInterface():
        
-    def __init__(self, fControl: ttk.Frame, fTimes):
-        self.fTimes = fTimes
+    def __init__(self, fControl: ttk.Frame):
         self.fHdr = Frame(fControl, bg='orange')
         fMain = Frame(fControl)
         self.fSideRight = Frame(fControl, bg='palegreen')
@@ -44,7 +45,17 @@ class ResultsInterface():
         self.fResults.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox(ALL)))
         canvas.bind('<Configure>', lambda e: canvas.itemconfig(cw, width=e.width))
         
-        #use the new db utils
+        #add holding message
+        lbl = ttk.Label(self.fResults, text='Results appear here automatically after finishes are saved')
+        lbl.pack(anchor=W)
+        lbl = ttk.Label(self.fResults, text='Or you can load a file of finish times from the control panel')
+        lbl.pack(anchor=W)
+        
+        #keep the finish data
+        self.rawFinishData = False
+        
+        ##################################################
+        #use the new db utils - just testing
         db = rbDb()
         result = db.createTable('test table', ('col1', 'col2'))
         print('create table result ', result)
@@ -64,19 +75,24 @@ class ResultsInterface():
         print('get row data: ', result)
         #result = db.deleteTable('test table')
         #print('delete table result ', result)
-        #self.getRecentRaceFile()
-        self.showRecentRace()
+        #################################################
         
-    def getRecentFinishFile(self):
-        fileList = getFileList(getCurrentFilesFolder())
-        if len(fileList) < 1:
-            return False
-        recentRaceData = getJSONFinishData(fileList[0])
-        return recentRaceData
+        #self.getRecentRaceFile()
+
+        #self.showRecentRace()
+        
+    #def getFinishFiles(self):
+    #    fileList = getFileList(getCurrentFilesFolder())
+    #    if len(fileList) < 1:
+    #        return False
+    #    #recentRaceData = getJSONFinishData(fileList[0])
+    #    #return recentRaceData
+    #    return fileList
+    #removing this as getFileList(getCurrentFilesFolder()) gives the same list
+    #os.path.basename(full_path) gives you the filename only (for the dialog box)
+    #need to add a files dialog to the control panel
     
-    def getSortedRaceData(self, raceNumber, useFinishFile=False):
-        if useFinishFile: raceInfo = self.getRecentFinishFile()
-        else: raceInfo = self.fTimes.getCurrentFinishData()
+    def getProcessedRaceData(self, raceNumber, raceInfo):
         if not raceInfo: return False
         TOTALMS = 'finishms'
         finishData = list(raceInfo['data'])
@@ -99,12 +115,19 @@ class ResultsInterface():
             'data': finishData,
         }
     
-    def EditEntry(self, i):
+    def editEntry(self, i):
         print('test', i)
         
-    def showRecentRace(self, raceNumber=1):
-        raceInfo = self.getSortedRaceData(raceNumber)
+    def setRawFinishData(self, fd):
+        self.rawFinishData = fd
+        
+    def showRecentRace(self, startNumber=1):
+        raceInfo = self.getProcessedRaceData(startNumber, self.rawFinishData)
         if not raceInfo: return
+        
+        #remove any previous results
+        for c in self.fResults.winfo_children():
+            c.destroy()
 
         #padding for the results cells
         racePadX = (4,4)
@@ -121,7 +144,7 @@ class ResultsInterface():
         lRaceTitle.grid(row=0, column=0, columnspan=8, sticky=W)
 
         #show race number
-        lRaceNum = ttk.Label(self.fResults, text='{}{} Start'.format(raceNumber, numSuffix(raceNumber)))
+        lRaceNum = ttk.Label(self.fResults, text='{}{} Start'.format(startNumber, numSuffix(startNumber)))
         lRaceNum.grid(row=2, column=0, columnspan=8, sticky=W)
         
         #show race date
@@ -144,12 +167,12 @@ class ResultsInterface():
         startRow = 4
         for i,d in enumerate(raceInfo['data']):
             #add an edit button
-            #bEdit = ttk.Button(self.fResults, image=editIcon, command=lambda x = i: self.EditEntry(x), padding=(0,0))
+            #bEdit = ttk.Button(self.fResults, image=editIcon, command=lambda x = i: self.editEntry(x), padding=(0,0))
             #bEdit.grid(row=i+startRow, column=0)
            
             #pos
             lbl = ttk.Label(self.fResults, text=i+1, anchor=W, foreground='blue', borderwidth=2, relief='groove', padding=(8,1), takefocus=True)
-            lbl.bind('<Button-1>', lambda _, x = i: self.EditEntry(x))
+            lbl.bind('<Button-1>', lambda _, x = i: self.editEntry(x))
             lbl.grid(row=i+startRow, column=0, sticky=E, padx=racePadX, pady=racePadY)
 
             lbl = ttk.Label(self.fResults, text=' '.join(d['class'].split()).strip(), anchor=W)
@@ -179,16 +202,27 @@ class ResultsInterface():
     def showControlPanel(self):
         #self.fHdr
         fControl = Frame(self.fHdr)
-        fControl.pack(side=LEFT)
+        fControl.pack(side=RIGHT, padx=(2,8), pady=(4,2))
         
-        #test label
-        #lbl = ttk.Label(fControl,text='Test Label')
-        #lbl.pack()
+        #title label
+        lbl = ttk.Label(fControl,text='Results Control Panel',style='Def12Bold.TLabel')
+        lbl.grid(row=0,column=0, columnspan=8, sticky=W)
+        
+        #grid padding
+        Ypadding=(8,0)
+        
+        #get finish times
+        #tbtn = ttk.Button(fControl, text='Get Finish Times')
+        #tbtn.grid(row=1, column=0, sticky=W, padx=(0,4), pady=Ypadding)
+        #lbl = ttk.Label(fControl, text='(overwrites any changes made below)')
+        #lbl.grid(row=1, column=1, sticky=W, padx=(0,0), pady=Ypadding)
         
         #start number
-        spLbl = ttk.Label(fControl, text='Start')
-        spLbl.pack(side=LEFT)
+        fStartControl = Frame(fControl)
+        fStartControl.grid(row=1,column=0, padx=(0,4), pady=Ypadding, sticky=W)
+        lbl = ttk.Label(fStartControl, text='Display start')
+        lbl.pack(side=LEFT, padx=(0,4), pady=(0,0), anchor=W)
         spValue = Variable(value=1)
-        spStart = Spinbox(fControl, from_=0, to=99, textvariable=spValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
-        spStart.pack(side=LEFT)
+        spStart = Spinbox(fStartControl, from_=0, to=99, textvariable=spValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
+        spStart.pack(side=LEFT, pady=(0,0), anchor=W)
         spStart.config(width=3)

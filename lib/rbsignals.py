@@ -169,7 +169,7 @@ class SignalsInterface:
 		self.lNextStartTime = ttk.Label(
 			f,
 			text='00:00:00',
-			style='Courier14Bold.TLabel',
+			style='CourierLargeBold.TLabel',
 			background='plum',
 			padding=(8,12,8,4) #left top right bottom
 		)
@@ -185,7 +185,7 @@ class SignalsInterface:
 		self.lTime2Start = ttk.Label(
 			f,
 			text='00:00:00',
-			style='Courier14Bold.TLabel',
+			style='CourierLargeBold.TLabel',
 			background='orange',
 			padding=(8,12,8,4) #left top right bottom   
 		)

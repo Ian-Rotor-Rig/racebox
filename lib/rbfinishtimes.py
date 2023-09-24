@@ -5,9 +5,8 @@ from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
     Canvas, Frame, Label, LabelFrame, Scrollbar, Spinbox, StringVar, messagebox, ttk)
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
+from lib.rbresults import ResultsInterface
 from lib.rbutility import (
-        FIXED_FONT,
-        FIXED_FONT_BOLD,
         MONTH_ABBREV,
         TITLE_FONT,
         STATUS_CODES,
@@ -24,7 +23,7 @@ from lib.rbutility import (
 
 class FinishTimesInterface:
     
-    def __init__(self, fControl: ttk.Frame, relay):
+    def __init__(self, fControl: ttk.Frame, fResults: ttk.Frame, relay):
         self.pos = 1
         self.finishList = []
         self.relay = relay
@@ -41,6 +40,9 @@ class FinishTimesInterface:
         self.statusCodes = STATUS_CODES
         self.statusCodes.insert(0, '')
         
+        #results tab
+        self.ri = ResultsInterface(fResults)
+        
         #finish data
         asInfo = self.__restoreFinishGridInfo()
         if 'id' in asInfo and len(asInfo['id']) > 0: self.raceId = asInfo['id']
@@ -52,7 +54,7 @@ class FinishTimesInterface:
         f = Frame(self.fc)
         f.pack(expand=True, fill=BOTH)
           
-        #left frame (for results)
+        #left frame (for finish times)
         lf = Frame(f)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
 
@@ -255,10 +257,10 @@ class FinishTimesInterface:
         right = 10
         above = 4
         
-        lPos = Label(f, text='', font=FIXED_FONT, justify=RIGHT)
+        lPos = Label(f, text='', justify=RIGHT)
         lPos.grid(row=rowNumber, column=0, padx=(0,right), pady=(above,below))
         
-        lTime = Label(f, text='', font=FIXED_FONT_BOLD)
+        lTime = Label(f, text='')
         lTime.grid(row=rowNumber, column=1, padx=(0,right), pady=(above,below))
         
         cbClass = ttk.Combobox(f, values=self.classNames, width=12)
@@ -316,7 +318,13 @@ class FinishTimesInterface:
             getFinishFileName('json'),
             processedFinishInfo,
         )
-        if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
+        if jsonResult:
+            #add data to results tab
+            finishes = self.getCurrentFinishData()
+            self.ri.setRawFinishData(finishes)
+            self.ri.showRecentRace()
+        else:
+            tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
 
     def autoSaveAction(self):
         saveFileName = getAutoSaveFileName()
