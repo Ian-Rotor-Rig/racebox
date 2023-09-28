@@ -20,16 +20,12 @@ STATUS_CODES = ['RET', 'OCS', 'DSQ', 'DNF', 'Other']
 FINISH_FILE_PREFIX = 'rbfinishes-'
 RESULT_DATABASE_NAME = 'racebox.db'
 AUTOSAVE_FILENAME = 'rbautosave.json'
+USE_FINISH_TIMES = 'Use finish times'
+NO_RACE_SELECTED = '(no race selected)'
 
 MSEC_IN_MINUTE = 1000 * 60
 MSEC_IN_HOUR = MSEC_IN_MINUTE * 60
 MSEC_IN_DAY = MSEC_IN_HOUR * 24
-
-#def dayPostfix(day):
-#    if day in [1, 21, 31]:  return 'st'
-#    if day in [2, 22]:  return 'nd'
-#    if day in [3, 23]:  return 'rd'
-#    return 'th'
 
 def numSuffix(num):
     return {1: 'st', 2: 'nd', 3: 'rd'}.get(4 if 10 <= num % 100 < 20 else num % 10, 'th') #4 could be any number > 3
@@ -113,6 +109,11 @@ def getFileList(folderName, prefix=FINISH_FILE_PREFIX, extn='json', recentFirst=
     fileList = glob.glob(os.path.join(folderName, '{}*.{}'.format(prefix, extn)), recursive = False)
     fileList.sort(key=os.path.getctime, reverse=recentFirst)
     return fileList
+
+def getFileNames(fileList):
+    fileNames = []
+    for f in fileList: fileNames.append(os.path.basename(f))
+    return fileNames
 
 def getRating(classValue, classList):
     # https://stackoverflow.com/questions/8270092/remove-all-whitespace-in-a-string/8270124#8270124

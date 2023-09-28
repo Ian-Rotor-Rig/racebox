@@ -1,12 +1,17 @@
-from tkinter import ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, Canvas, Frame, Scrollbar, Spinbox, Variable, ttk
+from tkinter import (ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, BooleanVar,
+                     Canvas, Frame, Scrollbar, Spinbox, StringVar, Variable,
+                     ttk)
 from lib.rbdb import rbDb
 from lib.rbutility import (
         ENTRY_FONT,
         MONTH_ABBREV, 
         MSEC_IN_DAY, MSEC_IN_HOUR, MSEC_IN_MINUTE,
+        NO_RACE_SELECTED,
         STATUS_FINISHED,
+        USE_FINISH_TIMES,
         getCurrentFilesFolder,
         getFileList,
+        getFileNames,
         getJSONFinishData,
         numSuffix,
     )
@@ -14,11 +19,11 @@ from lib.rbutility import (
 class ResultsInterface():
        
     def __init__(self, fControl: ttk.Frame):
-        self.fHdr = Frame(fControl, bg='orange')
         fMain = Frame(fControl)
-        self.fSideRight = Frame(fControl, bg='palegreen')
-        self.fHdr.pack(expand=False, fill=BOTH, padx=(2,2), pady=(2,2))
-        #self.fSideRight.pack(side=RIGHT, expand=False, fill=Y, padx=(2,2), pady=(10,2))
+        #fHdr = Frame(fControl, bg='orange')
+        fSideRight = Frame(fControl, bg='palegreen')
+        #fHdr.pack(expand=False, fill=BOTH, padx=(2,2), pady=(2,2))
+        fSideRight.pack(side=RIGHT, expand=False, fill=Y, padx=(2,2), pady=(10,2))
         fMain.pack(expand=True, fill=BOTH, padx=(2,2), pady=(10,2))
         
         #identify frames using some labels
@@ -28,9 +33,10 @@ class ResultsInterface():
         #lMain.pack()
         #lRight = ttk.Label(self.fSideRight, text='Right panel')
         #lRight.pack()
-        
+                
         #create the control panel
-        self.showControlPanel()
+        self.displayRaceId = StringVar(value=NO_RACE_SELECTED)
+        self.showControlPanel(fSideRight)
         
         #create the scrollable canvas
         fResultsArea = Frame(fMain)
@@ -48,12 +54,14 @@ class ResultsInterface():
         #add holding message
         lbl = ttk.Label(self.fResults, text='Results appear here automatically after finishes are saved')
         lbl.pack(anchor=W)
-        lbl = ttk.Label(self.fResults, text='Or you can load a file of finish times from the control panel')
+        lbl = ttk.Label(self.fResults, text='Or you can load a source file from the control panel')
         lbl.pack(anchor=W)
-        
+               
         #keep the finish data
-        self.rawFinishData = False
-        
+        self.currentFinishData = False
+        self.resultWorkingSet = False
+        self.previousStart = 1
+               
         ##################################################
         #use the new db utils - just testing
         db = rbDb()
@@ -118,12 +126,18 @@ class ResultsInterface():
     def editEntry(self, i):
         print('test', i)
         
-    def setRawFinishData(self, fd):
-        self.rawFinishData = fd
+    def setCurrentFinishData(self, fd):
+        self.currentFinishData = fd
+        self.resultWorkingSet = fd
         
-    def showRecentRace(self, startNumber=1):
-        raceInfo = self.getProcessedRaceData(startNumber, self.rawFinishData)
-        if not raceInfo: return
+    def showRecentRace(self, startNumber=1, useCorrectedTime=False): #corrected time calc needs a start time
+        raceInfo = self.getProcessedRaceData(
+            startNumber,
+            self.resultWorkingSet,
+        )
+        
+        #keep control panel start value in sync
+        if not startNumber == int(self.spStartValue.get()): self.spStartValue.set(startNumber)
         
         #remove any previous results
         for c in self.fResults.winfo_children():
@@ -138,6 +152,19 @@ class ResultsInterface():
         #weird, but necessary otherwise editIcon is garbage-collected
         #lEditIcon = ttk.Label(image=editIcon)
         #lEditIcon.image = editIcon
+        
+        if not raceInfo:
+            self.displayRaceId.set(NO_RACE_SELECTED)
+            if self.cbFinishOptionValue.get() == USE_FINISH_TIMES:
+                msg = 'Save the current finish times or select a source file'
+            else:
+                msg = 'No race data found'
+            lbl = ttk.Label(self.fResults, text=msg)
+            lbl.grid(row=0, column=0, columnspan=8, sticky=W)
+            return
+        
+        #show the race id in the control panel
+        self.displayRaceId.set(raceInfo['id'])
                       
         #show race title
         lRaceTitle = ttk.Label(self.fResults, text=raceInfo['name'], style='Def12Bold.TLabel')
@@ -162,6 +189,12 @@ class ResultsInterface():
         for i,h in enumerate(tableHdr):
             lHdr = ttk.Label(self.fResults, text=h, anchor=W, style='Def12Bold.TLabel')
             lHdr.grid(row=3, column=i, sticky=W, padx=racePadX, pady=racePadY)
+            
+        #if there are no finish times for this start...
+        if len(raceInfo['data']) == 0:
+            noTimesMsg = 'No finish times found for this start'
+            lbl = ttk.Label(self.fResults, text=noTimesMsg, anchor=W)
+            lbl.grid(row=4, column=0, columnspan=8, sticky=W, padx=racePadX, pady=racePadY)
 
         #display the results for each boat
         startRow = 4
@@ -198,18 +231,48 @@ class ResultsInterface():
                anchor=W
             )
             lbl.grid(row=i+startRow, column=4, sticky=E, padx=racePadX, pady=racePadY)
-                      
-    def showControlPanel(self):
-        #self.fHdr
-        fControl = Frame(self.fHdr)
-        fControl.pack(side=RIGHT, padx=(2,8), pady=(4,2))
+            
+    def startChoiceUpdate(self):
+        if self.spStartValue.get() == self.previousStart:
+            return
+        self.updateDisplayedRaceData()
+        self.previousStart = self.spStartValue.get()
+
+    def finishChoiceUpdate(self):
+        self.spStartValue.set(1)
+        self.updateDisplayedRaceData()
+        
+    def correctedTimeUpdate(self, val):
+        print('corrected time update ', val)
+        
+    def updateDisplayedRaceData(self):
+        fileName = self.cbFinishOptionValue.get()
+        
+        if fileName == USE_FINISH_TIMES:
+            self.resultWorkingSet = self.currentFinishData
+            self.showRecentRace(int(self.spStartValue.get()))
+            return
+        
+        if len(self.cpFileNamesList) == 0: return
+        try:
+            pos = self.cpFileNamesList.index(fileName)
+        except:
+            pos = -1
+        if pos > -1:
+            self.resultWorkingSet = getJSONFinishData(self.cpFilePathsList[pos])
+            self.showRecentRace(int(self.spStartValue.get()))
+                              
+    def showControlPanel(self, f):
+        fControl = Frame(f)
+        fControl.pack(padx=(8,8), pady=(0,2))
         
         #title label
         lbl = ttk.Label(fControl,text='Results Control Panel',style='Def12Bold.TLabel')
         lbl.grid(row=0,column=0, columnspan=8, sticky=W)
         
         #grid padding
-        Ypadding=(8,0)
+        Xpadding=(0,4)
+        Ypadding=(12,0)
         
         #get finish times
         #tbtn = ttk.Button(fControl, text='Get Finish Times')
@@ -217,12 +280,62 @@ class ResultsInterface():
         #lbl = ttk.Label(fControl, text='(overwrites any changes made below)')
         #lbl.grid(row=1, column=1, sticky=W, padx=(0,0), pady=Ypadding)
         
+        #load finish times file
+        fFinishCombo = Frame(fControl)
+        fFinishCombo.grid(row=1,column=0, padx=Xpadding, pady=Ypadding, sticky=W)
+        lbl = ttk.Label(fFinishCombo, text='Source')
+        lbl.pack(side=LEFT, padx=(0,8), pady=(0,0), anchor=W)
+        self.cpFilePathsList = getFileList(getCurrentFilesFolder())
+        self.cpFileNamesList = getFileNames(self.cpFilePathsList)
+        self.cbFinishOptionValue = StringVar(value=USE_FINISH_TIMES)
+        cbFinishOptions = [USE_FINISH_TIMES, *self.cpFileNamesList]
+        cbFinishFile = ttk.Combobox(fFinishCombo, values=cbFinishOptions, width=32, textvariable=self.cbFinishOptionValue, state='readonly')
+        cbFinishFile.pack(side=LEFT, pady=(0,0), anchor=W)
+        self.cbFinishOptionValue.trace_add('write', callback=lambda name,index,mode: self.finishChoiceUpdate())
+        
+        #race id
+        fRaceID = Frame(fControl)
+        fRaceID.grid(row=2,column=0, padx=Xpadding, pady=Ypadding, sticky=W)
+        lbl = ttk.Label(fRaceID, text='Race ID')
+        lbl.pack(padx=(0,8), pady=(0,0), anchor=W)
+        lbl = ttk.Label(
+            fRaceID,
+            textvariable=self.displayRaceId
+        )
+        lbl.pack(padx=(0,8), pady=(0,0), anchor=W)
+        
         #start number
         fStartControl = Frame(fControl)
-        fStartControl.grid(row=1,column=0, padx=(0,4), pady=Ypadding, sticky=W)
-        lbl = ttk.Label(fStartControl, text='Display start')
-        lbl.pack(side=LEFT, padx=(0,4), pady=(0,0), anchor=W)
-        spValue = Variable(value=1)
-        spStart = Spinbox(fStartControl, from_=0, to=99, textvariable=spValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
+        fStartControl.grid(row=3,column=0, padx=Xpadding, pady=Ypadding, sticky=W)
+        lbl = ttk.Label(fStartControl, text='Start')
+        lbl.pack(side=LEFT, padx=(0,8), pady=(0,0), anchor=W)
+        self.spStartValue = StringVar(value=1)
+        spStart = Spinbox(fStartControl, from_=1, to=999, textvariable=self.spStartValue, format="%01.0f", state='readonly', font=ENTRY_FONT)
         spStart.pack(side=LEFT, pady=(0,0), anchor=W)
         spStart.config(width=3)
+        self.spStartValue.trace_add('write', callback=lambda name,index,mode: self.startChoiceUpdate())
+        
+        #start time
+        fStartTime = Frame(fControl)
+        fStartTime.grid(row=4,column=0, padx=Xpadding, pady=Ypadding, sticky=W)
+        lbl = ttk.Label(fStartTime, text='Start Time')
+        lbl.pack(padx=(0,8), pady=(0,0), anchor=W)
+        #start time fields
+        self.hhStartValue = Variable(value='14')
+        hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhStartValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
+        hhEntry.pack(side='left')
+        hhEntry.config(width=3)
+        self.mmStartValue = Variable(value='30')
+        mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmStartValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
+        mmEntry.pack(side='left', padx=(4, 0))
+        mmEntry.config(width=3)
+        
+        #calculate corrected time? Requires a start time to be entered.
+        fCorrected = Frame(fControl)
+        fCorrected.grid(row=5,column=0, padx=Xpadding, pady=Ypadding, sticky=W)
+        self.chkCorrectedValue = BooleanVar(value=False)
+        chkCorrected = ttk.Checkbutton(fCorrected, text='Use Corrected Time', variable=self.chkCorrectedValue)
+        chkCorrected.pack(side=LEFT, pady=(0,0), anchor=W)
+        self.chkCorrectedValue.trace_add('write', callback=lambda name,index,mode: self.correctedTimeUpdate(self.chkCorrectedValue.get()))
+                
+        
