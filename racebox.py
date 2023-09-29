@@ -1,4 +1,4 @@
-from tkinter import (TOP, font, ttk, PhotoImage,
+from tkinter import (TOP, IntVar, Menu, font, messagebox, ttk, PhotoImage,
 	BOTTOM, X, BOTH, Tk, Canvas, W,E,NW, LEFT, RIGHT)
 from lib.rbsignals2 import Signals2Interface
 from lib.rbfinishtimes import FinishTimesInterface
@@ -18,10 +18,43 @@ default_font = font.nametofont('TkDefaultFont')
 default_font.configure(size=12)
 text_font = font.nametofont('TkTextFont')
 text_font.configure(size=12)
+menu_font = font.nametofont('TkMenuFont')
+menu_font.configure(size=12)
 
 # window icon
 icon = PhotoImage(file='images/racebox192.png')
 mainWindow.iconphoto(False, icon)
+
+#main menu
+topMenu = Menu(mainWindow)
+#file menu
+fileMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='File', menu=fileMenu)
+fileMenu.add_command(label='Exit', command=mainWindow.quit)
+#view menu
+viewMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='View', menu=viewMenu)
+advValue = IntVar(value=0)
+viewMenu.add_checkbutton(label='Advanced Options', variable=advValue, command=lambda: print('Adv Options ', advValue.get()))
+#help menu
+helpMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='Help', menu=helpMenu)
+helpMenu.add_command(label='Documentation',
+                     command=lambda: messagebox.showinfo(
+                         'Documentation',
+                         'Help for Racebox is at:\n' + 
+                         'https://github.com\n/rotor-rig/racebox/wiki'
+                         ))
+helpMenu.add_command(label='About',
+                     command=lambda: messagebox.showinfo(
+                         'About',
+                         'Racebox is a free program\n' + 
+                         'from Rotor-Rig.com\n' +
+                         'written by Ian Cherril\n' +
+                         'info@rotor-rig.com'
+                         ))
+#add menu to application
+mainWindow.config(menu=topMenu)
 
 # header colour
 hdrColour = 'silver'
