@@ -27,33 +27,6 @@ mainWindow.iconphoto(False, icon)
 
 #main menu
 topMenu = Menu(mainWindow)
-#file menu
-fileMenu = Menu(topMenu, tearoff=0)
-topMenu.add_cascade(label='File', menu=fileMenu)
-fileMenu.add_command(label='Exit', command=mainWindow.quit)
-#view menu
-viewMenu = Menu(topMenu, tearoff=0)
-topMenu.add_cascade(label='View', menu=viewMenu)
-advValue = IntVar(value=0)
-viewMenu.add_checkbutton(label='Advanced Options', variable=advValue, command=lambda: print('Adv Options ', advValue.get()))
-#help menu
-helpMenu = Menu(topMenu, tearoff=0)
-topMenu.add_cascade(label='Help', menu=helpMenu)
-helpMenu.add_command(label='Documentation',
-                     command=lambda: messagebox.showinfo(
-                         'Documentation',
-                         'Help for Racebox is at:\n' + 
-                         'https://github.com\n/rotor-rig/racebox/wiki'
-                         ))
-helpMenu.add_command(label='About',
-                     command=lambda: messagebox.showinfo(
-                         'About',
-                         'Racebox is a free program\n' + 
-                         'from Rotor-Rig.com\n' +
-                         'written by Ian Cherril\n' +
-                         'info@rotor-rig.com'
-                         ))
-#add menu to application
 mainWindow.config(menu=topMenu)
 
 # header colour
@@ -117,16 +90,62 @@ manualSignalsFrame = ttk.Frame(n, style='Control.TFrame') #now the manual signal
 finishTimesFrame = ttk.Frame(n, style='Control.TFrame')
 resultsFrame = ttk.Frame(n, style='Control.TFrame')
 
-n.add(signalsFrame, text='Auto Signals')
-n.add(manualSignalsFrame, text='Manual Signals')
-n.add(finishTimesFrame, text='Finish Times')
-n.add(resultsFrame, text='Results')
+n.add(signalsFrame, text='Auto Signals') #tab 0
+n.add(manualSignalsFrame, text='Manual Signals') #tab 1
+n.add(finishTimesFrame, text='Finish Times') #tab 2
+n.add(resultsFrame, text='Results') #tab 3
+n.tab(3, state='hidden')
 
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
 Signals2Interface(manualSignalsFrame, raceboxRelay)
 ft = FinishTimesInterface(finishTimesFrame, resultsFrame, raceboxRelay)
 #ResultsInterface(resultsFrame, ft)
+
+#control notebook tabs visibility
+def setNbTabs(nb: ttk.Notebook, adv: bool):
+    if adv:
+        nb.tab(0, state='hidden')
+        nb.tab(1, state='hidden')
+        nb.tab(2, state='normal')
+        nb.tab(3, state='normal')
+    else:
+        nb.tab(0, state='normal')
+        nb.tab(1, state='normal')
+        nb.tab(2, state='normal')
+        nb.tab(3, state='hidden')
+
+#define menu options for topMenu
+#file menu
+fileMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='File', menu=fileMenu)
+fileMenu.add_command(label='Exit', command=mainWindow.quit)
+#view menu
+viewMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='View', menu=viewMenu)
+advValue = IntVar(value=0)
+viewMenu.add_checkbutton(
+    label='Advanced Options',
+    variable=advValue,
+    command=lambda: setNbTabs(n, True if advValue.get() == 1 else False)
+    )
+#help menu
+helpMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='Help', menu=helpMenu)
+helpMenu.add_command(label='Documentation',
+                     command=lambda: messagebox.showinfo(
+                         'Documentation',
+                         'Help for Racebox is at:\n' + 
+                         'https://github.com\n/rotor-rig/racebox/wiki'
+                         ))
+helpMenu.add_command(label='About',
+                     command=lambda: messagebox.showinfo(
+                         'About',
+                         'Racebox is a free program\n' +
+                         'designed by Ian Cherrill\n' +
+                         'website: rotor-rig.com/racebox\n' +
+                         'contact: info@rotor-rig.com'
+                         ))
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')
