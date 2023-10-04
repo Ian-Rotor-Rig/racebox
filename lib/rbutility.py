@@ -34,11 +34,9 @@ def getJSONFinishData(fileName):
     try:
         with open (fileName, 'r') as file:
             return json.load(file)
-    except Exception as error:
+    except:
         return {
             'id': '',
-            'name': '',
-            'date': {},
             'data': []
         }
 

@@ -30,7 +30,7 @@ topMenu = Menu(mainWindow)
 mainWindow.config(menu=topMenu)
 
 # header colour
-hdrColour = 'silver'
+hdrColour = 'thistle'
 hdrColourText = 'darkslategrey'
 ftrColour = 'black'
 
@@ -43,7 +43,7 @@ s.configure('Header.TFrame', background=hdrColour)
 s.configure('Footer.TFrame', background=ftrColour)
 s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
 s.configure('Results.TNotebook', tabposition='se', background='indigo')
-s.configure('TNotebook.Tab', background='limegreen', padding=[8,4])
+s.configure('TNotebook.Tab', background='mediumaquamarine', padding=[8,4])
 s.configure('Custom.TButton', background='silver', padding=(8,8,8,6)) #left top right bottom 
 s.configure('H12Bold.TLabel', font=('Helvetica','12', 'bold'))
 s.configure('Def12Bold.TLabel', font=('TkDefaultFont','12', 'bold'))
@@ -100,19 +100,12 @@ n.tab(3, state='hidden')
 SignalsInterface(signalsFrame, raceboxRelay)
 Signals2Interface(manualSignalsFrame, raceboxRelay)
 ft = FinishTimesInterface(finishTimesFrame, resultsFrame, raceboxRelay)
-#ResultsInterface(resultsFrame, ft)
 
 #control notebook tabs visibility
 def setNbTabs(nb: ttk.Notebook, adv: bool):
     if adv:
-        nb.tab(0, state='hidden')
-        nb.tab(1, state='hidden')
-        nb.tab(2, state='normal')
         nb.tab(3, state='normal')
     else:
-        nb.tab(0, state='normal')
-        nb.tab(1, state='normal')
-        nb.tab(2, state='normal')
         nb.tab(3, state='hidden')
 
 #define menu options for topMenu
@@ -142,9 +135,9 @@ helpMenu.add_command(label='About',
                      command=lambda: messagebox.showinfo(
                          'About',
                          'Racebox is a free program\n' +
-                         'designed by Ian Cherrill\n' +
-                         'website: rotor-rig.com/racebox\n' +
-                         'contact: info@rotor-rig.com'
+                         'Designed by Ian Cherrill\n' +
+                         'Website: rotor-rig.com/racebox\n' +
+                         'Contact: info@rotor-rig.com'
                          ))
 
 #footer

@@ -84,10 +84,7 @@ class FinishTimesInterface:
         lracedate = Label(raceNameFrame, text='Date')
         lracedate.pack(side=LEFT, anchor=W, padx=(20,0))
         
-        now = datetime.now()
-        self.raceDayValue = StringVar(
-            value=asInfo['date']['day'] if 'day' in asInfo['date'] else now.date
-            )
+        self.raceDayValue = StringVar(value='01')
         enRaceDay = Spinbox(
             raceNameFrame,
             from_=1,
@@ -100,9 +97,7 @@ class FinishTimesInterface:
         self.raceDayValue.trace_add('write', callback=lambda a,b,c: self.autoSaveAction())
         enRaceDay.pack(side=LEFT, padx=(4,0))
 
-        self.raceMonthValue = StringVar(
-            value=MONTH_ABBREV[asInfo['date']['month'] - 1] if 'month' in asInfo['date'] else MONTH_ABBREV[now.month - 1]
-            )
+        self.raceMonthValue = StringVar(value=MONTH_ABBREV[0])
         enRaceMonth = ttk.Combobox(
             raceNameFrame,
             values=MONTH_ABBREV,
@@ -114,9 +109,7 @@ class FinishTimesInterface:
         enRaceMonth.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
         enRaceMonth.pack(side=LEFT, padx=(2,0))
 
-        self.raceYearValue = StringVar(
-            value=asInfo['date']['year'] if 'year' in asInfo['date'] else now.year
-            )
+        self.raceYearValue = StringVar(value='1970')
         enRaceYear = Spinbox(
             raceNameFrame,
             from_=2020,
@@ -128,6 +121,7 @@ class FinishTimesInterface:
             )
         self.raceYearValue.trace_add('write', callback=lambda a,b,c: self.autoSaveAction())
         enRaceYear.pack(side=LEFT, padx=(2,0))
+        self.setRaceDate(asInfo if len(asInfo['id']) > 0 else False)
         
         lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=TITLE_FONT)
         lraceTimesTitle.pack(anchor=W, pady=(5,0))
@@ -156,8 +150,8 @@ class FinishTimesInterface:
         btnFinish.pack(anchor=W, pady=(50,0))
 
         #non finisher button
-        btnReset = ttk.Button(rf, text="Non-Finisher", command=self.nonFinishAction, style='Custom.TButton')
-        btnReset.pack(anchor=W, pady=(50,0))  
+        btnNoFinish = ttk.Button(rf, text="Non-Finisher", command=self.nonFinishAction, style='Custom.TButton')
+        btnNoFinish.pack(anchor=W, pady=(50,0))  
                 
         #right bottom frame (reset and save)
         rbf = LabelFrame(rf, text='Use After Races')
@@ -178,6 +172,20 @@ class FinishTimesInterface:
                 self.__addFinishRow(self.rowFrame)
                 if not asInfo['data'][row]['pos'] == 0: self.pos = asInfo['data'][row]['pos'] + 1
             self.__populateFinishGrid(self.rowFrame, asInfo['data'])
+            
+    def setRaceDate(self, dt=False):
+        if not dt:
+            x = datetime.today()
+            dd = '{:02}'.format(x.day)
+            mm = MONTH_ABBREV[x.month - 1]
+            yy = x.year
+        else:
+            dd = '{:02}'.format(dt['date']['day'])
+            mm = MONTH_ABBREV[dt['date']['month'] - 1]
+            yy = dt['date']['year']            
+        self.raceDayValue.set(value=dd)
+        self.raceMonthValue.set(value=mm)
+        self.raceYearValue.set(value=yy)
         
     def finishAction(self, abClass='', abSail=''):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
@@ -301,8 +309,9 @@ class FinishTimesInterface:
             w.destroy()
         self.__addFinishHdr(self.rowFrame)
         tmpFile = getAutoSaveFileName()
-        if os.path.exists(tmpFile): os.remove(tmpFile)
         self.raceId = getUniqueId()
+        self.setRaceDate()
+        if os.path.exists(tmpFile): os.remove(tmpFile)
         
     def saveToFileAction(self):
         processedFinishInfo = self.getCurrentFinishData()
@@ -363,12 +372,12 @@ class FinishTimesInterface:
             })
         return {
             'id': autoSaveInfo['id'] if 'id' in autoSaveInfo else '',
-            'name': autoSaveInfo['name'],
+            'name': autoSaveInfo['name'] if 'name' in autoSaveInfo else '',
             'date': {
                 'day': autoSaveInfo['date']['day'],
                 'month': autoSaveInfo['date']['month'],
                 'year': autoSaveInfo['date']['year']
-            } if 'day' in autoSaveInfo['date'] else {},
+            } if 'date' in autoSaveInfo else {},
             'data': finishRowList
         }
        
