@@ -331,7 +331,7 @@ class FinishTimesInterface:
             #add data to results tab
             finishes = self.getCurrentFinishData()
             self.ri.setCurrentFinishData(finishes)
-            self.ri.showRecentRace(1)
+            self.ri.showRecentRace()
         else:
             tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
 

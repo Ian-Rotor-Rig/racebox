@@ -1,7 +1,7 @@
 from tkinter import (ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, BooleanVar,
                      Canvas, Frame, Scrollbar, Spinbox, StringVar, Variable,
                      ttk)
-from lib.rbdb import rbDb
+#from lib.rbdb import rbDb
 from lib.rbutility import (
         ENTRY_FONT,
         MONTH_ABBREV, 
@@ -64,9 +64,9 @@ class ResultsInterface():
                
         ##################################################
         #use the new db utils - just testing
-        db = rbDb()
-        result = db.createTable('test table', ('col1', 'col2'))
-        print('create table result ', result)
+        #db = rbDb()
+        #result = db.createTable('test table', ('col1', 'col2'))
+        #print('create table result ', result)
         #result = db.addRow('test table', ('another row', 99))
         #print('add row result ', result)
         #result = db.addRows('test table',
@@ -78,44 +78,45 @@ class ResultsInterface():
         #print('add rows result ', result)
         #result = db.removeRows('test table', 'col1', 'another row')
         #print('remove rows result', result)
-        db.saveChanges()
-        result = db.getRows('test table')
-        print('get row data: ', result)
+        #db.saveChanges()
+        #result = db.getRows('test table')
+        #print('get row data: ', result)
         #result = db.deleteTable('test table')
         #print('delete table result ', result)
         #################################################
-        
-        #self.getRecentRaceFile()
-
-        #self.showRecentRace()
-        
-    #def getFinishFiles(self):
-    #    fileList = getFileList(getCurrentFilesFolder())
-    #    if len(fileList) < 1:
-    #        return False
-    #    #recentRaceData = getJSONFinishData(fileList[0])
-    #    #return recentRaceData
-    #    return fileList
-    #removing this as getFileList(getCurrentFilesFolder()) gives the same list
-    #os.path.basename(full_path) gives you the filename only (for the dialog box)
-    #need to add a files dialog to the control panel
-    
-    def getProcessedRaceData(self, raceNumber, raceInfo):
+           
+    def getProcessedRaceData(self, raceInfo):
         if not raceInfo: return False
         TOTALMS = 'finishms'
+        
+        #get finish data
         finishData = list(raceInfo['data'])
+        
+        #get control panel values
+        cp = self.getControlPanelValues()
+        
+        #define start time
+        startMs = cp['startHour'] * MSEC_IN_HOUR + cp['startMinute'] * MSEC_IN_MINUTE
+        print('start ms ', startMs)
+        
+        #remove boats not in this race
         for i in finishData.copy():
-            if not i['race'] == raceNumber: finishData.remove(i)
+            if not i['race'] == cp['startNumber']: finishData.remove(i)
+        #calculate finish time for each boat in ms
         for i in finishData:
             if i['status'] == STATUS_FINISHED:
                 msSum = (
                     i['clock']['hh'] * MSEC_IN_HOUR
                     + i['clock']['mm'] * MSEC_IN_MINUTE
                     + i['clock']['ss'] * 1000
-                    + i['clock']['ms']
+                    ###+ i['clock']['ms']
                 )
-                i[TOTALMS] = msSum
-            else: i[TOTALMS] = MSEC_IN_DAY # to make sorting easier
+                if cp['useCorrected'] == True:
+                    i[TOTALMS] = (msSum - startMs) / (i['rating'] / 1000)
+                    print(msSum - startMs, i['rating'] / 1000)
+                else:
+                    i[TOTALMS] = msSum
+            else: i[TOTALMS] = MSEC_IN_DAY #non-finishers - this makes sorting easier
                 
         finishData.sort(key=lambda x: x[TOTALMS])
         return {
@@ -129,15 +130,20 @@ class ResultsInterface():
     def setCurrentFinishData(self, fd):
         self.currentFinishData = fd
         self.resultWorkingSet = fd
+        #get the values from the control panel
+        #cp = self.getControlPanelValues()
+                      
         
-    def showRecentRace(self, startNumber=1, useCorrectedTime=False): #corrected time calc needs a start time
+    def showRecentRace(self): #corrected time calc needs a start time
         raceInfo = self.getProcessedRaceData(
-            startNumber,
             self.resultWorkingSet,
         )
         
+        cp = self.getControlPanelValues()
+        
+######################################################may still be an issue        
         #keep control panel start value in sync
-        if not startNumber == int(self.spStartValue.get()): self.spStartValue.set(startNumber)
+        #if not startNumber == int(self.spStartValue.get()): self.spStartValue.set(startNumber)
         
         #remove any previous results
         for c in self.fResults.winfo_children():
@@ -162,16 +168,16 @@ class ResultsInterface():
             lbl = ttk.Label(self.fResults, text=msg)
             lbl.grid(row=0, column=0, columnspan=8, sticky=W)
             return
-        
+              
         #show the race id in the control panel
         self.displayRaceId.set(raceInfo['id'])
-                      
+
         #show race title
         lRaceTitle = ttk.Label(self.fResults, text=raceInfo['name'], style='Def12Bold.TLabel')
         lRaceTitle.grid(row=0, column=0, columnspan=8, sticky=W)
 
         #show race number
-        lRaceNum = ttk.Label(self.fResults, text='{}{} Start'.format(startNumber, numSuffix(startNumber)))
+        lRaceNum = ttk.Label(self.fResults, text='{}{} Start'.format(cp['startNumber'], numSuffix(cp['startNumber'])))
         lRaceNum.grid(row=2, column=0, columnspan=8, sticky=W)
         
         #show race date
@@ -250,7 +256,7 @@ class ResultsInterface():
         
         if fileName == USE_FINISH_TIMES:
             self.resultWorkingSet = self.currentFinishData
-            self.showRecentRace(int(self.spStartValue.get()))
+            self.showRecentRace()
             return
         
         if len(self.cpFileNamesList) == 0: return
@@ -260,7 +266,7 @@ class ResultsInterface():
             pos = -1
         if pos > -1:
             self.resultWorkingSet = getJSONFinishData(self.cpFilePathsList[pos])
-            self.showRecentRace(int(self.spStartValue.get()))
+            self.showRecentRace()
                               
     def showControlPanel(self, f):
         fControl = Frame(f)
@@ -338,4 +344,13 @@ class ResultsInterface():
         chkCorrected.pack(side=LEFT, pady=(0,0), anchor=W)
         self.chkCorrectedValue.trace_add('write', callback=lambda name,index,mode: self.correctedTimeUpdate(self.chkCorrectedValue.get()))
                 
-        
+    def getControlPanelValues(self):
+        return {
+            'raceId': self.displayRaceId.get(),
+            'sourceFile': self.cbFinishOptionValue.get(),
+            'startNumber': int(self.spStartValue.get()),
+            'startHour': int(self.hhStartValue.get()),
+            'startMinute': int(self.mmStartValue.get()),
+            'useCorrected': self.chkCorrectedValue.get()
+        }
+    
