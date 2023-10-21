@@ -45,6 +45,7 @@ s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
 s.configure('Results.TNotebook', tabposition='se', background='indigo')
 s.configure('TNotebook.Tab', background='mediumaquamarine', padding=[8,4])
 s.configure('Custom.TButton', background='silver', padding=(8,8,8,6)) #left top right bottom 
+s.configure('CustomSmall.TButton', background='silver', padding=(2,2,2,1)) #left top right bottom 
 s.configure('H12Bold.TLabel', font=('Helvetica','12', 'bold'))
 s.configure('Def12Bold.TLabel', font=('TkDefaultFont','12', 'bold'))
 s.configure('CourierLargeBold.TLabel', font=('Courier','16', 'bold'))

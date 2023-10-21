@@ -22,11 +22,19 @@ RESULT_DATABASE_NAME = 'racebox.db'
 AUTOSAVE_FILENAME = 'rbautosave.json'
 USE_FINISH_TIMES = 'Use finish times'
 NO_RACE_SELECTED = '(no race selected)'
+TOTALMS = 'finishms'
 
 MSEC_IN_MINUTE = 1000 * 60
 MSEC_IN_HOUR = MSEC_IN_MINUTE * 60
 MSEC_IN_DAY = MSEC_IN_HOUR * 24
 
+def msToTime(ms_in):
+    seconds = int(ms_in/1000)%60
+    minutes = int(ms_in/(MSEC_IN_MINUTE))%60
+    hours = int(ms_in/(MSEC_IN_HOUR))%24
+    ms = int(ms_in - hours*MSEC_IN_HOUR - minutes*MSEC_IN_MINUTE - seconds*1000)
+    return hours, minutes, seconds, ms
+ 
 def numSuffix(num):
     return {1: 'st', 2: 'nd', 3: 'rd'}.get(4 if 10 <= num % 100 < 20 else num % 10, 'th') #4 could be any number > 3
 
