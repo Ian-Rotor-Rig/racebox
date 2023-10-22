@@ -170,3 +170,42 @@ def saveToCSVFile(saveFileName, finishInfo):
             return {'result': True, 'msg': 'File {} saved'.format(saveFileName)}
     except Exception as error:
         return {'result': False, 'msg': 'Could not save the file {} - {}'.format(saveFileName, error)}
+
+############################################################## needs completing
+def exportResults(saveFileName, resultInfo):
+    fileHdr = 'Pos, Clock, Class, Sail, Rating, Race, Status, Notes\n'
+    try:
+        with open (saveFileName, 'w+') as file:
+            if len(resultInfo['name']) > 0: file.write(resultInfo['name'] + '\n')
+            file.write(fileHdr)
+            for f in resultInfo['data']:
+                rating = '' if f['rating'] == 0 else f['rating']
+                status = '' if f['status'] == STATUS_FINISHED else f['status']
+                if f['pos'] > 0:
+                    lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
+                        f['pos'],
+                        f['clock']['hh'],
+                        f['clock']['mm'],
+                        f['clock']['ss'],
+                        f['class'],
+                        f['sailnum'],
+                        rating,
+                        f['race'],
+                        status,
+                        f['notes']
+                    )
+                else:
+                    lineOut = '{}, {}, {}, {}, {}, {}, {}, {}\n'.format(
+                        '',
+                        '',
+                        f['class'],
+                        f['sailnum'],
+                        rating,
+                        f['race'],
+                        status,
+                        f['notes']
+                    )
+                file.write(lineOut)
+            return {'result': True, 'msg': 'File {} saved'.format(saveFileName)}
+    except Exception as error:
+        return {'result': False, 'msg': 'Could not save the file {} - {}'.format(saveFileName, error)}

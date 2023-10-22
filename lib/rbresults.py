@@ -22,27 +22,28 @@ from lib.rbutility import (
 class ResultsInterface():
        
     def __init__(self, fControl: ttk.Frame):
-        fMain = Frame(fControl)
+        self.fParent = Frame(fControl)
+        self.fParent.pack(expand=True, fill=BOTH)
+        self.fMain = Frame(self.fParent)
         #fHdr = Frame(fControl, bg='orange')
-        fSideRight = Frame(fControl, bg='palegreen')
+        self.fSideRight = Frame(self.fParent) #, bg='palegreen')
         #fHdr.pack(expand=False, fill=BOTH, padx=(2,2), pady=(2,2))
-        fSideRight.pack(side=RIGHT, expand=False, fill=Y, padx=(2,2), pady=(10,2))
-        fMain.pack(expand=True, fill=BOTH, padx=(2,2), pady=(10,2))
+        self.setMainAreaVisible()
         
         #identify frames using some labels
         #lHdr = ttk.Label(self.fHdr, text='Header')
         #lHdr.pack()
-        #lMain = ttk.Label(fMain, text='Main panel')
+        #lMain = ttk.Label(self.fMain, text='Main panel')
         #lMain.pack()
         #lRight = ttk.Label(self.fSideRight, text='Right panel')
         #lRight.pack()
                 
         #create the control panel
         self.displayRaceId = StringVar(value=NO_RACE_SELECTED)
-        self.showControlPanel(fSideRight)
+        self.showControlPanel(self.fSideRight)
         
         #create the scrollable canvas
-        fResultsArea = Frame(fMain)
+        fResultsArea = Frame(self.fMain)
         fResultsArea.pack(expand=True, fill=BOTH)
         canvas = Canvas(fResultsArea , highlightthickness=0)
         sb = Scrollbar(fResultsArea , orient='vertical', command=canvas.yview)
@@ -63,30 +64,11 @@ class ResultsInterface():
         #keep the finish data
         self.currentFinishData = False
         self.resultWorkingSet = False
-        self.previousStart = 1
-               
-        ##################################################
-        #use the new db utils - just testing
-        #db = rbDb()
-        #result = db.createTable('test table', ('col1', 'col2'))
-        #print('create table result ', result)
-        #result = db.addRow('test table', ('another row', 99))
-        #print('add row result ', result)
-        #result = db.addRows('test table',
-        #    [
-        #        ('some text', 5),
-        #        ('some other text', 99),\
-        #    ]
-        #)
-        #print('add rows result ', result)
-        #result = db.removeRows('test table', 'col1', 'another row')
-        #print('remove rows result', result)
-        #db.saveChanges()
-        #result = db.getRows('test table')
-        #print('get row data: ', result)
-        #result = db.deleteTable('test table')
-        #print('delete table result ', result)
-        #################################################
+        self.previousStart = 1     
+    
+    def setMainAreaVisible(self, showFrame=True):
+        self.fSideRight.pack(side=RIGHT, expand=False, fill=Y, padx=(2,2), pady=(10,2)) if showFrame else self.fSideRight.forget()
+        self.fMain.pack(expand=True, fill=BOTH, padx=(2,2), pady=(10,2)) if showFrame else self.fMain.forget()
            
     def getProcessedRaceData(self, raceInfo):
         if not raceInfo: return False
@@ -117,7 +99,7 @@ class ResultsInterface():
                     i[TOTALMS] = (msSum - startMs) / (i['rating'] / 1000)
                     print(msSum - startMs, i['rating'] / 1000)
                 else:
-                    i[TOTALMS] = msSum - startMs
+                    i[TOTALMS] = msSum - startMs if self.startTimeSet else msSum
             else: i[TOTALMS] = MSEC_IN_DAY #non-finishers - this makes sorting easier
                 
         finishData.sort(key=lambda x: x[TOTALMS])
@@ -128,14 +110,24 @@ class ResultsInterface():
     
     def editEntry(self, i):
         print('test', i)
+        self.setMainAreaVisible(False)
+        self.fEdit = Frame(self.fParent)
+        self.fEdit.pack(expand=True, fill=BOTH)
+        lEdit = ttk.Label(self.fEdit, text='Test editing an entry')
+        lEdit.pack(side=LEFT)
+        bEditCancel = ttk.Button(self.fEdit, text='Cancel', command=lambda x = i: self.editEntryComplete(x))
+        bEditCancel.pack(side=LEFT)
+    
+    def editEntryComplete(self, i):
+        print('finished editing ', i)
+        self.fEdit.forget()
+        self.setMainAreaVisible()        
         
     def setCurrentFinishData(self, fd):
         self.currentFinishData = fd
         self.resultWorkingSet = fd
-        #get the values from the control panel
-        #cp = self.getControlPanelValues()
-                      
-        
+        self.unsetStartTime()
+                             
     def showRecentRace(self):
         raceInfo = self.getProcessedRaceData(self.resultWorkingSet)        
         cp = self.getControlPanelValues()
@@ -186,11 +178,11 @@ class ResultsInterface():
         lRaceDate = ttk.Label(self.fResults, text=dateText)
         lRaceDate.grid(row=1, column=0, columnspan=8, sticky=W)
 
-        #show race time
+        #show race start time
         timeText = 'Start time {:02}:{:02}'.format(
                 cp['startHour'],
                 cp['startMinute'],
-            )
+            ) if self.startTimeSet else 'Start time (not set)'
         lRaceTime = ttk.Label(self.fResults, text=timeText)
         lRaceTime.grid(row=3, column=0, columnspan=8, sticky=W)
 
@@ -199,7 +191,14 @@ class ResultsInterface():
         lRaceNum.grid(row=2, column=0, columnspan=8, sticky=W)
                
         #column titles
-        tableHdr = ['', 'Class', 'Sail', 'Finish', 'Corrected', 'Rating'] if useCorrected else ['', 'Class', 'Sail', 'Finish', 'Elapsed']
+        #tableHdr = ['', 'Class', 'Sail', 'Finish', 'Corrected', 'Rating'] if useCorrected else ['', 'Class', 'Sail', 'Finish', 'Elapsed']
+        if not self.startTimeSet:
+            tableHdr = ['', 'Class', 'Sail', 'Finish']
+        elif useCorrected:
+            tableHdr = ['', 'Class', 'Sail', 'Finish', 'Corrected', 'Rating']
+        else:
+            tableHdr = ['', 'Class', 'Sail', 'Finish', 'Elapsed']
+        
         for i,h in enumerate(tableHdr):
             lHdr = ttk.Label(self.fResults, text=h, anchor=W, style='Def12Bold.TLabel')
             lHdr.grid(row=4, column=i, sticky=W, padx=racePadX, pady=racePadY)
@@ -238,7 +237,9 @@ class ResultsInterface():
                 )
             lbl.grid(row=i+startRow, column=3, sticky=W, padx=racePadX, pady=racePadY)
             
-            if useCorrected:
+            if not self.startTimeSet:
+                pass
+            elif useCorrected:
                 ct = msToTime(d[TOTALMS])
                 #print('corrected time ', ct)
                 lbl = ttk.Label(self.fResults,
@@ -274,16 +275,27 @@ class ResultsInterface():
     def startChoiceUpdate(self):
         if self.spStartValue.get() == self.previousStart:
             return
+        self.unsetStartTime()
         self.updateDisplayedRaceData()
         self.previousStart = self.spStartValue.get()
 
     def finishChoiceUpdate(self):
         self.spStartValue.set(1)
+        self.unsetStartTime()
         self.updateDisplayedRaceData()
         
     def correctedTimeUpdate(self, val):
         #print('corrected time update ', val)
         self.updateDisplayedRaceData()
+    
+    def setStartTime(self):
+        #print('start time set or updated')
+        self.startTimeSet = True
+        self.updateDisplayedRaceData()
+
+    def unsetStartTime(self):
+        #print('start time unset')
+        self.startTimeSet = False
         
     def updateDisplayedRaceData(self):
         fileName = self.cbFinishOptionValue.get()
@@ -346,25 +358,27 @@ class ResultsInterface():
         self.spStartValue.trace_add('write', callback=lambda name,index,mode: self.startChoiceUpdate())
         
         #start time
+        self.startTimeSet = False
         fStartTime = Frame(fControl)
         fStartTime.grid(row=4,column=0, padx=Xpadding, pady=Ypadding, sticky=W)
         lbl = ttk.Label(fStartTime, text='Start Time')
         lbl.pack(padx=(0,8), pady=(0,0), anchor=W)
         #start time fields
-        self.hhStartValue = Variable(value='14')
+        self.hhStartValue = Variable(value='12')
         hhEntry = Spinbox(fStartTime, from_=0, to=23, textvariable=self.hhStartValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
         hhEntry.pack(side='left')
         hhEntry.config(width=3)
-        self.mmStartValue = Variable(value='30')
+        self.mmStartValue = Variable(value='00')
         mmEntry = Spinbox(fStartTime, from_=0, to=59, textvariable=self.mmStartValue, format="%02.0f", state='readonly', font=ENTRY_FONT)
         mmEntry.pack(side='left', padx=(4, 0))
         mmEntry.config(width=3)        
         #start time update button
         btnTimeUpdate = ttk.Button(
             fStartTime,
-            text="Update",
-            command=self.updateDisplayedRaceData,
-            style='CustomSmall.TButton'
+            text="Set",
+            command=self.setStartTime,
+            style='CustomSmall.TButton',
+            width=4
             )
         btnTimeUpdate.pack(side='left', padx=(8, 0))
         

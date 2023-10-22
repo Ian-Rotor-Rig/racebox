@@ -82,4 +82,25 @@ class rbDb:
         self.cursor.execute(qry)
         return self.cursor.fetchall() 
     
-    
+        ##################################################
+        #use the new db utils - just testing
+        #db = rbDb()
+        #result = db.createTable('test table', ('col1', 'col2'))
+        #print('create table result ', result)
+        #result = db.addRow('test table', ('another row', 99))
+        #print('add row result ', result)
+        #result = db.addRows('test table',
+        #    [
+        #        ('some text', 5),
+        #        ('some other text', 99),\
+        #    ]
+        #)
+        #print('add rows result ', result)
+        #result = db.removeRows('test table', 'col1', 'another row')
+        #print('remove rows result', result)
+        #db.saveChanges()
+        #result = db.getRows('test table')
+        #print('get row data: ', result)
+        #result = db.deleteTable('test table')
+        #print('delete table result ', result)
+        #################################################
