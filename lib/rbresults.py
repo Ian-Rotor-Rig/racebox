@@ -1,5 +1,5 @@
 from tkinter import (ALL, BOTH, E, LEFT, NW, RIGHT, W, Y, BooleanVar,
-                     Canvas, Frame, LabelFrame, Scrollbar, Spinbox, StringVar, Variable,
+                     Canvas, Frame, IntVar, LabelFrame, Scrollbar, Spinbox, StringVar, Variable,
                      ttk)
 #from lib.rbdb import rbDb
 from lib.rbutility import (
@@ -29,6 +29,11 @@ class ResultsInterface():
         self.fSideRight = Frame(self.fParent) #, bg='palegreen')
         #fHdr.pack(expand=False, fill=BOTH, padx=(2,2), pady=(2,2))
         self.setMainAreaVisible()
+        
+        #create the edit screen (not shown by default)
+        self.fEdit = Frame(self.fParent)
+        self.createEditPage()
+        self.editEntryId = IntVar(value=-1)
         
         #identify frames using some labels
         #lHdr = ttk.Label(self.fHdr, text='Header')
@@ -110,18 +115,24 @@ class ResultsInterface():
     
     def editEntry(self, i):
         print('test', i)
+        self.editEntryId.set(value=i)
         self.setMainAreaVisible(False)
-        self.fEdit = Frame(self.fParent)
         self.fEdit.pack(expand=True, fill=BOTH)
-        lEdit = ttk.Label(self.fEdit, text='Test editing an entry')
-        lEdit.pack(side=LEFT)
-        bEditCancel = ttk.Button(self.fEdit, text='Cancel', command=lambda x = i: self.editEntryComplete(x))
-        bEditCancel.pack(side=LEFT)
     
-    def editEntryComplete(self, i):
-        print('finished editing ', i)
+    def editEntryComplete(self, saveEntry=True):
+        print('finished editing ', self.editEntryId.get(), ' save is ', saveEntry)
+        if saveEntry: self.upDateEntry()
         self.fEdit.forget()
-        self.setMainAreaVisible()        
+        self.setMainAreaVisible()
+        
+    def upDateEntry(self):
+        print('update entry ', self.editEntryId.get())
+        ##update data in self.resultWorkingSet
+
+    def deleteEntry(self):
+        print('delete entry ', self.editEntryId.get())
+        ##delete it here
+        self.editEntryComplete(False) #then return to main screen     
         
     def setCurrentFinishData(self, fd):
         self.currentFinishData = fd
@@ -400,3 +411,52 @@ class ResultsInterface():
             'useCorrected': self.chkCorrectedValue.get()
         }
     
+    def createEditPage(self):
+        #self.fEdit = Frame(self.fParent)
+        print('create edit page')
+        lEdit = ttk.Label(self.fEdit, text='Test editing an entry')
+        lEdit.pack(side=LEFT)
+        bEditCancel = ttk.Button(self.fEdit, text='Cancel', command=lambda: self.editEntryComplete(False), style='Custom.TButton')
+        bEditCancel.pack(side=LEFT)
+        bEditOk = ttk.Button(self.fEdit, text='Ok', command=lambda: self.editEntryComplete(True), style='Custom.TButton')
+        bEditOk.pack(side=LEFT)
+        bEditDelete = ttk.Button(self.fEdit, text='Delete', command=lambda: self.deleteEntry(), style='Custom.TButton')
+        bEditDelete.pack(side=LEFT)
+
+""" {
+  "id": "b60d2858-5ef5-48c0-8e2a-e7336091d98c",
+  "name": "Aero Race",
+  "date": {
+    "day": 3,
+    "month": 10,
+    "year": 2023
+  },
+  "data": [
+    {
+      "pos": 1,
+      "clock": {
+        "hh": 20,
+        "mm": 23,
+        "ss": 27,
+        "ms": 731.506
+      },
+      "class": "Aero9",
+      "rating": 1010,
+      "sailnum": "1760",
+      "race": 1,
+      "status": "Finished",
+      "notes": ""
+    },
+  ]
+}
+
+    def getControlPanelValues(self):
+        return {
+            'raceId'
+            'sourceFile'
+            'startNumber'
+            'startHour'
+            'startMinute'
+            'useCorrected'
+        }
+ """
