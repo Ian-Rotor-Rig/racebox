@@ -1,7 +1,6 @@
-#from tkinter import *
-from tkinter import (TOP, font, ttk, PhotoImage,
+from tkinter import (TOP, IntVar, Menu, font, messagebox, ttk, PhotoImage,
 	BOTTOM, X, BOTH, Tk, Canvas, W,E,NW, LEFT, RIGHT)
-from lib.rbextras import ExtrasInterface
+from lib.rbsignals2 import Signals2Interface
 from lib.rbfinishtimes import FinishTimesInterface
 from lib.rbsignals import SignalsInterface
 from datetime import datetime
@@ -12,18 +11,26 @@ from lib.rbconfig import RaceboxConfig
 # Create the main window
 mainWindow = Tk()
 mainWindow.title('Racebox')
-mainWindow.minsize(width=800, height=500)
+mainWindow.minsize(width=1000, height=500)
 
 #default font
-default_font = font.nametofont("TkDefaultFont")
+default_font = font.nametofont('TkDefaultFont')
 default_font.configure(size=12)
+text_font = font.nametofont('TkTextFont')
+text_font.configure(size=12)
+menu_font = font.nametofont('TkMenuFont')
+menu_font.configure(size=12)
 
 # window icon
 icon = PhotoImage(file='images/racebox192.png')
 mainWindow.iconphoto(False, icon)
 
+#main menu
+topMenu = Menu(mainWindow)
+mainWindow.config(menu=topMenu)
+
 # header colour
-hdrColour = 'silver'
+hdrColour = 'thistle'
 hdrColourText = 'darkslategrey'
 ftrColour = 'black'
 
@@ -35,8 +42,13 @@ s.configure('Setup.TFrame', borderwidth=4, relief='flat')
 s.configure('Header.TFrame', background=hdrColour)
 s.configure('Footer.TFrame', background=ftrColour)
 s.configure('Custom.TNotebook', tabposition='ne', background='indigo')
-s.configure('TNotebook.Tab', background='limegreen', padding=[8,4])
-s.configure('Custom.TButton', background='silver', padding=(8,4))
+s.configure('Results.TNotebook', tabposition='se', background='indigo')
+s.configure('TNotebook.Tab', background='mediumaquamarine', padding=[8,4])
+s.configure('Custom.TButton', background='silver', padding=(8,8,8,6)) #left top right bottom 
+s.configure('CustomSmall.TButton', background='silver', padding=(2,2,2,1)) #left top right bottom 
+s.configure('H12Bold.TLabel', font=('Helvetica','12', 'bold'))
+s.configure('Def12Bold.TLabel', font=('TkDefaultFont','12', 'bold'))
+s.configure('CourierLargeBold.TLabel', font=('Courier','16', 'bold'))
 
 #general config
 config = RaceboxConfig()
@@ -75,16 +87,59 @@ hdrLabel.pack(side=LEFT)
 # main screen
 n = ttk.Notebook(mainWindow, style='Custom.TNotebook',padding='0 4 0 0')
 signalsFrame = ttk.Frame(n, style='Control.TFrame', padding='10 10 10 10')
+manualSignalsFrame = ttk.Frame(n, style='Control.TFrame') #now the manual signals tab
 finishTimesFrame = ttk.Frame(n, style='Control.TFrame')
-extrasFrame = ttk.Frame(n, style='Control.TFrame')
-n.add(signalsFrame, text='Auto Signals')
-n.add(extrasFrame, text='Manual Signals')
-n.add(finishTimesFrame, text='Finish Times')
+resultsFrame = ttk.Frame(n, style='Control.TFrame')
+
+n.add(signalsFrame, text='Auto Signals') #tab 0
+n.add(manualSignalsFrame, text='Manual Signals') #tab 1
+n.add(finishTimesFrame, text='Finish Times') #tab 2
+n.add(resultsFrame, text='Results') #tab 3
+n.tab(3, state='hidden')
 
 #add widgets to each control frame
 SignalsInterface(signalsFrame, raceboxRelay)
-FinishTimesInterface(finishTimesFrame, raceboxRelay)
-ExtrasInterface(extrasFrame, raceboxRelay)
+Signals2Interface(manualSignalsFrame, raceboxRelay)
+ft = FinishTimesInterface(finishTimesFrame, resultsFrame, raceboxRelay)
+
+#control notebook tabs visibility
+def setNbTabs(nb: ttk.Notebook, adv: bool):
+    if adv:
+        nb.tab(3, state='normal')
+    else:
+        nb.tab(3, state='hidden')
+
+#define menu options for topMenu
+#file menu
+fileMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='File', menu=fileMenu)
+fileMenu.add_command(label='Exit', command=mainWindow.quit)
+#view menu
+viewMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='View', menu=viewMenu)
+advValue = IntVar(value=0)
+viewMenu.add_checkbutton(
+    label='Advanced Options',
+    variable=advValue,
+    command=lambda: setNbTabs(n, True if advValue.get() == 1 else False)
+    )
+#help menu
+helpMenu = Menu(topMenu, tearoff=0)
+topMenu.add_cascade(label='Help', menu=helpMenu)
+helpMenu.add_command(label='Documentation',
+                     command=lambda: messagebox.showinfo(
+                         'Documentation',
+                         'Help for Racebox is at:\n' + 
+                         'https://github.com\n/rotor-rig/racebox/wiki'
+                         ))
+helpMenu.add_command(label='About',
+                     command=lambda: messagebox.showinfo(
+                         'About',
+                         'Racebox is a free program\n' +
+                         'Designed by Ian Cherrill\n' +
+                         'Website: rotor-rig.com/racebox\n' +
+                         'Contact: info@rotor-rig.com'
+                         ))
 
 #footer
 footerFrame = ttk.Frame(mainWindow, style='Footer.TFrame')

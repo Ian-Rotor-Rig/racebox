@@ -1,11 +1,15 @@
 [
     {"name": "2.4mR", "rating": 1240},
+    {"name": "2000", "rating": 1114},
+    {"name": "29er", "rating": 897},
     {"name": "420", "rating": 1100},
     {"name": "Aero5", "rating": 1136},
     {"name": "Aero6", "rating": 1105},
     {"name": "Aero7", "rating": 1063},
     {"name": "Aero9", "rating": 1010},
     {"name": "Cadet", "rating": 1430},
+    {"name": "Comet", "rating": 1210},
+    {"name": "D-Zero", "rating": 1029},
     {"name": "Enterprise", "rating": 1126},
     {"name": "Europe", "rating": 1141},
     {"name": "Finn", "rating": 1049},
@@ -16,6 +20,7 @@
     {"name": "K1", "rating": 1070},
     {"name": "Lark", "rating": 1065},
     {"name": "Merlin Rocket", "rating": 980},
+    {"name": "Mirror", "rating": 1387},
     {"name": "OK", "rating": 1104},
     {"name": "Optimist", "rating": 1104},
     {"name": "Phantom", "rating": 1002},
@@ -26,6 +31,7 @@
     {"name": "RS Tera", "rating": 1445},
     {"name": "RS Tera Pro", "rating": 1364},
     {"name": "Solo", "rating": 1142},
+    {"name": "Streaker", "rating": 1128},
     {"name": "Topper", "rating": 1369},
     {"name": "Wayfarer", "rating": 1105}
 ]

@@ -3,7 +3,7 @@ from tkinter import ALL, BOTH, LEFT, N, NONE, RIGHT, W, Y, Canvas, Frame, Label,
 from tkinter.font import BOLD, Font
 from lib.rbconfig import RaceboxConfig
 
-class ExtrasInterface:
+class Signals2Interface:
     
     def __init__(self, fControl: ttk.Frame, relay):
         self.countdownActive = False

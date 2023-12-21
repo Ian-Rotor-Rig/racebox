@@ -1,21 +1,29 @@
 from datetime import datetime
 import json
 import os
-import sched
-from tkinter import (ALL, BOTH, BOTTOM, CENTER, END, LEFT, NW, RIGHT, E, SW, W, X, Y,
-    Canvas, Frame, Label, LabelFrame, Scrollbar, StringVar, messagebox, ttk)
+from tkinter import (ALL, BOTH, BOTTOM, CENTER, LEFT, NW, RIGHT, E, SW, W, X, Y,
+    Canvas, Frame, Label, LabelFrame, Scrollbar, Spinbox, StringVar, messagebox, ttk)
 import tkinter as tk
 from lib.rbconfig import RaceboxConfig
+from lib.rbresults import ResultsInterface
+from lib.rbutility import (
+        MONTH_ABBREV,
+        TITLE_FONT,
+        STATUS_CODES,
+        STATUS_FINISHED,
+        getAutoSaveFileName,
+        getFinishFileName,
+        getJSONFinishData,
+        getUniqueId,
+        processFinishInfo,
+        saveToCSVFile,
+        setJSONFinishData,
+        onlyNumbers
+    )
 
 class FinishTimesInterface:
     
-    TITLE_FONT = 'Helvetica 12 bold'
-    FIXED_FONT = 'Courier 12'
-    FIXED_FONT_BOLD = 'Courier 12 bold'
-    
-    STATUS_FINISHED = 'Finished'
-    
-    def __init__(self, fControl: ttk.Frame, relay):
+    def __init__(self, fControl: ttk.Frame, fResults: ttk.Frame, relay):
         self.pos = 1
         self.finishList = []
         self.relay = relay
@@ -29,10 +37,16 @@ class FinishTimesInterface:
             self.classNames.append(c['name'])
             
         #the list of status codes
-        self.statusCodes = ['', 'RET', 'OCS', 'DSQ', 'DNF', 'Other']
-                
+        self.statusCodes = STATUS_CODES
+        self.statusCodes.insert(0, '')
+        
+        #results tab
+        self.ri = ResultsInterface(fResults)
+        
         #finish data
         asInfo = self.__restoreFinishGridInfo()
+        if 'id' in asInfo and len(asInfo['id']) > 0: self.raceId = asInfo['id']
+        else: self.raceId = getUniqueId()
         self.finishData = asInfo['data']
         
         self.fc = fControl
@@ -40,14 +54,14 @@ class FinishTimesInterface:
         f = Frame(self.fc)
         f.pack(expand=True, fill=BOTH)
           
-        #left frame (for results)
+        #left frame (for finish times)
         lf = Frame(f)
         lf.pack(side=LEFT, fill=BOTH, expand=True)
 
-        self.validateNumbers = (lf.register(self.__onlyNumbers), '%S')
+        self.validateNumbers = (lf.register(onlyNumbers), '%S')
 
         #left side lower frame for approaching boats
-        abFrame = LabelFrame(lf, text='Approaching Boats', font=FinishTimesInterface.TITLE_FONT)
+        abFrame = LabelFrame(lf, text='Approaching Boats', font=TITLE_FONT)
         abFrame.pack(side=BOTTOM, anchor=SW, ipadx=4, padx=4, pady=(16,4))
         self.__drawApproachingBoats(abFrame)
                 
@@ -70,14 +84,46 @@ class FinishTimesInterface:
         lracedate = Label(raceNameFrame, text='Date')
         lracedate.pack(side=LEFT, anchor=W, padx=(20,0))
         
-        now = datetime.now()
-        self.raceDateValue = StringVar(value=now.strftime('%d %b %Y'))            
-        if 'date' in asInfo and len(asInfo['date']) > 0: self.raceDateValue.set(asInfo['date'])
-        enRaceDate = ttk.Entry(raceNameFrame, textvariable=self.raceDateValue, width=12)
-        enRaceDate.bind('<KeyRelease>', lambda e: self.autoSaveAction())
-        enRaceDate.pack(side=LEFT, anchor=W, padx=(4,0))
+        self.raceDayValue = StringVar(value='01')
+        enRaceDay = Spinbox(
+            raceNameFrame,
+            from_=1,
+            to=31,
+            textvariable=self.raceDayValue,
+            format="%02.0f",
+            state='readonly',
+            width=4
+            )
+        self.raceDayValue.trace_add('write', callback=lambda a,b,c: self.autoSaveAction())
+        enRaceDay.pack(side=LEFT, padx=(4,0))
+
+        self.raceMonthValue = StringVar(value=MONTH_ABBREV[0])
+        enRaceMonth = ttk.Combobox(
+            raceNameFrame,
+            values=MONTH_ABBREV,
+            textvariable=self.raceMonthValue,
+            state='readonly',
+            width=6
+            )
+        enRaceMonth.bind('<KeyRelease>', lambda e: self.autoSaveAction())
+        enRaceMonth.bind('<<ComboboxSelected>>', lambda e: self.autoSaveAction())
+        enRaceMonth.pack(side=LEFT, padx=(2,0))
+
+        self.raceYearValue = StringVar(value='1970')
+        enRaceYear = Spinbox(
+            raceNameFrame,
+            from_=2020,
+            to=2999,
+            textvariable=self.raceYearValue,
+            format="%04.0f",
+            state='readonly',
+            width=6
+            )
+        self.raceYearValue.trace_add('write', callback=lambda a,b,c: self.autoSaveAction())
+        enRaceYear.pack(side=LEFT, padx=(2,0))
+        self.setRaceDate(asInfo if len(asInfo['id']) > 0 else False)
         
-        lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=FinishTimesInterface.TITLE_FONT)
+        lraceTimesTitle = Label(self.raceDetailsFrame, text='Finish Times', font=TITLE_FONT)
         lraceTimesTitle.pack(anchor=W, pady=(5,0))
         
         #canvas for scrollable finish times
@@ -104,8 +150,8 @@ class FinishTimesInterface:
         btnFinish.pack(anchor=W, pady=(50,0))
 
         #non finisher button
-        btnReset = ttk.Button(rf, text="Non-Finisher", command=self.nonFinishAction, style='Custom.TButton')
-        btnReset.pack(anchor=W, pady=(50,0))  
+        btnNoFinish = ttk.Button(rf, text="Non-Finisher", command=self.nonFinishAction, style='Custom.TButton')
+        btnNoFinish.pack(anchor=W, pady=(50,0))  
                 
         #right bottom frame (reset and save)
         rbf = LabelFrame(rf, text='Use After Races')
@@ -126,6 +172,20 @@ class FinishTimesInterface:
                 self.__addFinishRow(self.rowFrame)
                 if not asInfo['data'][row]['pos'] == 0: self.pos = asInfo['data'][row]['pos'] + 1
             self.__populateFinishGrid(self.rowFrame, asInfo['data'])
+            
+    def setRaceDate(self, dt=False):
+        if not dt:
+            x = datetime.today()
+            dd = '{:02}'.format(x.day)
+            mm = MONTH_ABBREV[x.month - 1]
+            yy = x.year
+        else:
+            dd = '{:02}'.format(dt['date']['day'])
+            mm = MONTH_ABBREV[dt['date']['month'] - 1]
+            yy = dt['date']['year']            
+        self.raceDayValue.set(value=dd)
+        self.raceMonthValue.set(value=mm)
+        self.raceYearValue.set(value=yy)
         
     def finishAction(self, abClass='', abSail=''):
         on2Off = float(self.config.get('Signals', 'finishOn2Off'))
@@ -149,7 +209,7 @@ class FinishTimesInterface:
         #finish data for this row
         newFinishData = {
             'pos': self.pos if finisher else 0,
-            'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond},
+            'clock': {'hh': now.hour, 'mm': now.minute, 'ss': now.second, 'ms': now.microsecond/1000},
             'class': StringVar(value=classValue),
             'sailnum': StringVar(value=sailValue), #the interface uses a string
             'race': StringVar(value='1'),
@@ -172,7 +232,7 @@ class FinishTimesInterface:
             #clock
             cell = f.grid_slaves(row=gridRow, column=1)
             cell[0].configure(text='{:02}:{:02}:{:02}'.format(rowData[r]['clock']['hh'], rowData[r]['clock']['mm'], rowData[r]['clock']['ss'])
-             if rowData[r]['status'].get() == FinishTimesInterface.STATUS_FINISHED else '')
+             if rowData[r]['status'].get() == STATUS_FINISHED else '')
 
             #class
             cell = f.grid_slaves(row=gridRow, column=2)
@@ -189,7 +249,7 @@ class FinishTimesInterface:
             #status
             cell = f.grid_slaves(row=gridRow, column=5)
             cell[0].configure(textvariable=rowData[r]['status'])
-            if rowData[r]['status'].get() == FinishTimesInterface.STATUS_FINISHED:
+            if rowData[r]['status'].get() == STATUS_FINISHED:
                 cell[0].configure(state='disabled')
             else:
                 cell[0].configure(state='readonly')
@@ -205,10 +265,10 @@ class FinishTimesInterface:
         right = 10
         above = 4
         
-        lPos = Label(f, text='', font=FinishTimesInterface.FIXED_FONT, justify=RIGHT)
+        lPos = Label(f, text='', justify=RIGHT)
         lPos.grid(row=rowNumber, column=0, padx=(0,right), pady=(above,below))
         
-        lTime = Label(f, text='', font=FinishTimesInterface.FIXED_FONT_BOLD)
+        lTime = Label(f, text='')
         lTime.grid(row=rowNumber, column=1, padx=(0,right), pady=(above,below))
         
         cbClass = ttk.Combobox(f, values=self.classNames, width=12)
@@ -238,11 +298,7 @@ class FinishTimesInterface:
         for i,h in enumerate(fileHdr):
             l = Label(f, text=h[0])
             l.grid(row=0, column=i, sticky=h[1])
-        
-    def __onlyNumbers(self, k):
-        if k in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']: return True
-        return False
-        
+               
     def resetFinishBoxAction(self):
         if not messagebox.askyesno('Reset', 'Are you sure? You should save finish times first.'): return
         self.pos = 1
@@ -252,119 +308,57 @@ class FinishTimesInterface:
         for w in f.winfo_children():
             w.destroy()
         self.__addFinishHdr(self.rowFrame)
-        tmpFile = self.__getAutoSaveFileName()
-        if os.path.exists(tmpFile): os.remove(tmpFile)          
-        
-    def __getFinishFileName(self):
-        now = datetime.now()
-        useDefaultFolder = True if self.config.get('Files', 'finshFileUseDefaultFolder').lower() == 'true' else False
-        defaultFolder = os.path.expanduser('~') if useDefaultFolder else ''
-        fn = self.config.get('Files','finishFileFolder') + 'finishes-{}'.format(now.strftime('%Y%m%d-%H%M'))
-        return defaultFolder + fn
+        tmpFile = getAutoSaveFileName()
+        self.raceId = getUniqueId()
+        self.setRaceDate()
+        if os.path.exists(tmpFile): os.remove(tmpFile)
         
     def saveToFileAction(self):
-        saveFileName = self.__getFinishFileName()
-        saveFinishesToCSV = self.__saveToCSVFile(saveFileName + '.csv')
+        processedFinishInfo = self.getCurrentFinishData()
+        saveFinishesToCSV = saveToCSVFile(
+            getFinishFileName('csv'),
+            processedFinishInfo,
+            )
         if saveFinishesToCSV['result']:
             tk.messagebox.showinfo('Save File', saveFinishesToCSV['msg'])
         else:
             tk.messagebox.showinfo('Save File Error', saveFinishesToCSV['msg'])
-        jsonResult = self.__setJSONFinishData(saveFileName + '.json')
-        if not jsonResult: tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
-        
-    def __getRating(self, classValue):
-        rating = 0
-        for c in self.classList:
-            if c['name'].lower().strip() == classValue.get().lower().strip(): rating = c['rating']
-        return rating
-        
-    def __saveToCSVFile(self, saveFileName):
-        fileHdr = 'Pos, Clock, Class, Sail, Rating, Race, Status, Notes\n'
-        try:
-            with open (saveFileName, 'w+') as file:
-                if len(self.raceNameValue.get()) > 0: file.write(self.raceNameValue.get() + '\n')
-                file.write(fileHdr)
-                for f in self.finishData:
-                    rating = str(self.__getRating(f['class']))
-                    if rating == '0': rating = ''
-                    if f['pos'] > 0:
-                        lineOut = '{}, {:02}:{:02}:{:02}, {}, {}, {}, {}, {}, {}\n'.format(
-                            f['pos'],
-                            f['clock']['hh'],
-                            f['clock']['mm'],
-                            f['clock']['ss'],
-                            f['class'].get(),
-                            f['sailnum'].get(),
-                            rating,
-                            f['race'].get(),
-                            f['status'].get() if f['status'].get() != FinishTimesInterface.STATUS_FINISHED else '',
-                            f['notes'].get()
-                        )
-                    else:
-                        lineOut = '{}, {}, {}, {}, {}, {}, {}, {}\n'.format(
-                            '',
-                            '',
-                            f['class'].get(),
-                            f['sailnum'].get(),
-                            rating,
-                            f['race'].get(),
-                            f['status'].get() if f['status'].get() != FinishTimesInterface.STATUS_FINISHED else '',
-                            f['notes'].get()
-                        )
-                    file.write(lineOut)
-                return {'result': True, 'msg': 'File {} saved'.format(saveFileName)}
-        except Exception as error:
-            return {'result': False, 'msg': 'Could not save the file {} - {}'.format(saveFileName, error)}
-    
-    def __getAutoSaveFileName(self):
-        homeFolder = os.path.expanduser('~')
-        return homeFolder + '/rbautosave.json'
-    
+        jsonResult = setJSONFinishData(
+            getFinishFileName('json'),
+            processedFinishInfo,
+        )
+        if jsonResult:
+            #add data to results tab
+            finishes = self.getCurrentFinishData()
+            self.ri.setCurrentFinishData(finishes)
+            self.ri.showRecentRace()
+        else:
+            tk.messagebox.showinfo('Save File Error', 'JSON finish data could not be saved')
+
     def autoSaveAction(self):
-        saveFileName = self.__getAutoSaveFileName()
-        self.__setJSONFinishData(saveFileName)
-            
-    def __setJSONFinishData(self, fileName):
-        finishInfo = {
-            'name': self.raceNameValue.get(),
-            'date': self.raceDateValue.get(),
-            'data': []
-        }
-        for rd in self.finishData:
-            rating = self.__getRating(rd['class'])
-            rd = {
-                'pos': rd['pos'],
-                'clock': rd['clock'],
-                'class': rd['class'].get(),
-                'rating': rating,
-                'sailnum':rd['sailnum'].get(),
-                'race': rd['race'].get(),
-                'status': rd['status'].get(),
-                'notes': rd['notes'].get()
-            }
-            finishInfo['data'].append(rd)
-        try:
-            with open (fileName, 'w+') as file:
-                file.write(json.dumps(finishInfo))
-                return True
-        except Exception as error:
-            print(error)
-            return False
-            
-    def __getJSONFinishData(self, fileName):
-        try:
-            with open (fileName, 'r') as file:
-                return json.load(file)
-        except:
-            return {
-            'name': '',
-            'date': '',
-            'data': []
-            }
+        saveFileName = getAutoSaveFileName()
+        setJSONFinishData(
+            saveFileName,
+            self.getCurrentFinishData()
+        )
         
+    def getCurrentFinishData(self):
+        return processFinishInfo({
+                'id': self.raceId,
+                'name': self.raceNameValue.get(),
+                'date': {
+                    'day': int(self.raceDayValue.get()),
+                    'month': MONTH_ABBREV.index(self.raceMonthValue.get()) + 1,
+                    'year': int(self.raceYearValue.get()),
+                },
+                'data': self.finishData
+            },
+            self.classList
+        )
+                              
     def __restoreFinishGridInfo(self):
-        autoSaveFile = self.__getAutoSaveFileName()
-        autoSaveInfo = self.__getJSONFinishData(autoSaveFile)
+        autoSaveFile = getAutoSaveFileName()
+        autoSaveInfo = getJSONFinishData(autoSaveFile)
         finishRowList = []
         for row in autoSaveInfo['data']:
             finishRowList.append({
@@ -377,12 +371,16 @@ class FinishTimesInterface:
                 'notes': StringVar(value=row['notes'])
             })
         return {
-            'name': autoSaveInfo['name'],
-            'date': autoSaveInfo['date'],
+            'id': autoSaveInfo['id'] if 'id' in autoSaveInfo else '',
+            'name': autoSaveInfo['name'] if 'name' in autoSaveInfo else '',
+            'date': {
+                'day': autoSaveInfo['date']['day'],
+                'month': autoSaveInfo['date']['month'],
+                'year': autoSaveInfo['date']['year']
+            } if 'date' in autoSaveInfo else {},
             'data': finishRowList
         }
-
-        
+       
     def __drawApproachingBoats(self, abFrame): 
         padGap = 4
         layout = [2,2]
