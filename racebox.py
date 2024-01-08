@@ -4,8 +4,8 @@ from lib.rbsignals2 import Signals2Interface
 from lib.rbfinishtimes import FinishTimesInterface
 from lib.rbsignals import SignalsInterface
 from datetime import datetime
-from lib.rbserial import USBSerialRelay
-from lib.rbhid import USBHIDRelay
+from lib.rbrelay import USBSerialRelay
+from lib.rbrelay import USBHIDRelay
 from lib.rbconfig import RaceboxConfig
 
 # Create the main window

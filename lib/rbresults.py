@@ -413,7 +413,7 @@ class ResultsInterface():
     
     def createEditPage(self):
         #self.fEdit = Frame(self.fParent)
-        print('create edit page')
+        #print('create edit page')
         lEdit = ttk.Label(self.fEdit, text='Test editing an entry')
         lEdit.pack(side=LEFT)
         bEditCancel = ttk.Button(self.fEdit, text='Cancel', command=lambda: self.editEntryComplete(False), style='Custom.TButton')

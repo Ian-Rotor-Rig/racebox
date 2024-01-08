@@ -13,7 +13,7 @@ class SignalsInterface:
 	
 	sequenceListLights = [
         {'name': 'No lights', 'on': 0, 'flash': 0},
-        {'name': 'On: 1m, Flash: 10s', 'on': 60, 'flash': 10},		
+        {'name': 'On: 1m, Flash: 10s', 'on': -60, 'flash': -10},		
 	]
  
 	#signal status definitions
@@ -76,11 +76,19 @@ class SignalsInterface:
 	def __countdown(self):
 		if not self.relay.active: print('no active relay')
 		signalsConfig = self.__getSignalsConfig()
-		[signals, starts] = self.__getSignalList(signalsConfig)
-		self.__countdownLoop(signals, starts, len(starts), signalsConfig['name'])
+		# [signals, starts, lightsOn, lightsFlash] = self.__getSignalList(signalsConfig)
+		signalsList = self.__getSignalList(signalsConfig)
+		# self.__countdownLoop(signals, starts, len(starts), signalsConfig['name'])
+		self.__countdownLoop(signalsList, signalsConfig)
    
-	def __countdownLoop(self, signals, starts, startCount, seqName):
+	# def __countdownLoop(self, signals, starts, startCount, seqName):
+	def __countdownLoop(self, signalsList, signalsConfig):
 		if not self.countdownActive: return
+		# startCount = len(signalsList['starts'])
+		signals = signalsList['signals']
+		starts = signalsList['starts']
+  
+		# is each signals still valid? should it be sounded now?
 		if len(signals) > 0:
 			tooLate = signals[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
 			chk = self.__checkNextSignal(signals[0], tooLate)
@@ -88,14 +96,25 @@ class SignalsInterface:
 				self.relay.onoff(self.fCountdown, self.on2Off)
 			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
 				if signals[0] == starts[0]: starts.pop(0)
-				rm = signals.pop(0)
+				# rm = signals.pop(0)
+				signals.pop(0)
+    
+		# is each light time still valid? should the light be changed now?
+  
+  
+		# thought - where do we do the light flashing thing?
+  
+    
 		if self.configChange:
 			signalsConfig = self.__getSignalsConfig()
-			[signals, starts] = self.__getSignalList(signalsConfig)		
-			startCount = len(starts)	
+			# [signals, starts, lightsOn, lightsFlash] = self.__getSignalList(signalsConfig)		
+			signalsList = self.__getSignalList(signalsConfig)
+			# startCount = len(starts)	
 			self.configChange = False		
-		self.__updateCountdownDisplay(signals, starts, startCount, seqName)
-		self.fCountdown.after(SignalsInterface.COUNTDOWN_PRECISION, self.__countdownLoop, signals, starts, startCount, seqName)
+		# self.__updateCountdownDisplay(signals, starts, startCount, seqName)
+		self.__updateCountdownDisplay(signalsList, signalsConfig)
+		# self.fCountdown.after(SignalsInterface.COUNTDOWN_PRECISION, self.__countdownLoop, signals, starts, startCount, seqName)
+		self.fCountdown.after(SignalsInterface.COUNTDOWN_PRECISION, self.__countdownLoop, signalsList, signalsConfig)
   
 	def __checkNextSignal(self, signal, tooLate):
 		now = datetime.now()
@@ -106,33 +125,67 @@ class SignalsInterface:
 	def __getSignalsConfig(self):
 		return {
 			'name': self.selectedSequenceName.get(),
+			'nameLights': self.selectedLightSeqName.get(),
 			'starts': int(self.startsCount.get()),
 			'startHour': int(self.hhValue.get()),
 			'startMinute': int(self.mmValue.get())
         }
    
 	def __getSignalList(self, config):
+		# get the signal seq selected
 		sequenceIndex = -1
 		for sequenceIndex, item in enumerate(SignalsInterface.sequenceList):
 			if item['name'] == config['name']: break
 		if sequenceIndex == -1: return []
+
+		lightsSeqIndex = 0
+		for lightsSeqIndex, item in enumerate(SignalsInterface.sequenceListLights):
+			if item['name'] == config['nameLights']: break
+  
+		#define the returned lists
 		signalList = []
 		startList = []
+		lightsOnList = []
+		lightsFlashList = []
+  
+		# calculate 
 		now = datetime.now()
 		firstStart = now.replace(hour=config['startHour'], minute=config['startMinute'], second=0, microsecond=0)
 		currentStart = firstStart
 		startInterval = SignalsInterface.sequenceList[sequenceIndex]['interval']
+		onSetting = SignalsInterface.sequenceListLights[lightsSeqIndex]['on']
+		flashSetting = SignalsInterface.sequenceListLights[lightsSeqIndex]['flash']
+  
+		# loop thru this for the number of starts set
 		for _ in range(config['starts']):
 			for warning in SignalsInterface.sequenceList[sequenceIndex]['warning']:
 				warningTime = currentStart - timedelta(minutes=abs(warning))
 				if warningTime not in signalList: signalList.append(warningTime)
+			# for non-flashing lights the light is switched off either by the start or by the beginning of flashing lights
+			if onSetting != 0:
+				lightsOnTime = currentStart - timedelta(seconds=abs(onSetting))
+				if lightsOnTime not in lightsOnList: lightsOnList.append(lightsOnTime)
+			# for flashing lights the light is switched off by the start
+			if flashSetting != 0:
+				lightsFlashTime = currentStart - timedelta(seconds=abs(flashSetting))
+				if lightsFlashTime not in lightsFlashList: lightsFlashList.append(lightsFlashTime)
 			if currentStart not in signalList:
 				signalList.append(currentStart)
 				startList.append(currentStart)
+			# get the next start time
 			currentStart = currentStart + timedelta(minutes=startInterval)
-		return [signalList, startList]
+   
+		# finished
+		# print ({'signals': signalList, 'starts': startList, 'lights': lightsOnList, 'flash': lightsFlashList})
+		return {'signals': signalList, 'starts': startList, 'lights': lightsOnList, 'flash': lightsFlashList}
 
-	def __updateCountdownDisplay(self, signals, starts, startCount, seqName):
+	#def __updateCountdownDisplay(self, signals, starts, startCount, seqName):
+	def __updateCountdownDisplay(self, signalsList, signalsConfig):
+		starts = signalsList['starts']
+		signals = signalsList['signals']
+		startCount = len(starts)
+		seqName = signalsConfig['name']
+		seqNameLights = signalsConfig['nameLights']
 		self.lNumberOfStartsValue.config(text=startCount)
 		if len(signals) < 1:
 			self.lTime2Start.config(text='00:00:00')
@@ -150,6 +203,7 @@ class SignalsInterface:
 		else:
 			self.lTime2Start.config(text='00:00:00')
 		self.lSequenceValue.config(text=seqName)
+		self.lSeqLightsValue.config(text=seqNameLights)
   
 	def __addStart(self):
 		currentStarts = int(self.startsCount.get())
@@ -235,20 +289,33 @@ class SignalsInterface:
 			anchor=W
 		)
 		self.lSequenceValue.grid(column=1,row=4,sticky=W)	  
-		
+  
+		#lights sequence
+		lSeqLightTxt = Label(
+			f,
+			text='Lights'
+		)
+		lSeqLightTxt.grid(column=0,row=5,sticky=W)		
+		self.lSeqLightsValue = Label(
+			f,
+			text='',
+			anchor=W
+		)
+		self.lSeqLightsValue.grid(column=1,row=5,sticky=W)
+  		
 		#general recall/add start button
 		lAddStartTxt = Label(
 			f,
 			text='General Recall'
 		)
-		lAddStartTxt.grid(column=0,row=5,sticky=W)		
+		lAddStartTxt.grid(column=0,row=6,sticky=W)		
 		lAddStartBtn = ttk.Button(
 			f,
 			text='Add Start',
    			command=self.__addStart,
    			style='Custom.TButton'
 		)
-		lAddStartBtn.grid(column=1,row=5,sticky=W)	
+		lAddStartBtn.grid(column=1,row=6,sticky=W)	
 
 	def __initConfigInterface(self, f: ttk.Frame):
 		# start time
@@ -308,7 +375,6 @@ class SignalsInterface:
 
 		lightSeqNames = []
 		for s in SignalsInterface.sequenceListLights: lightSeqNames.append(s['name'])
-		### https://www.pythontutorial.net/tkinter/tkinter-combobox/
 		self.selectedLightSeqName = StringVar()
 		startLightSigEntry = ttk.Combobox(f, values=lightSeqNames, textvariable=self.selectedLightSeqName, state='readonly', font=ENTRY_FONT)
 		defaultLightSequence = int(self.config.get('Lights', 'defaultSequence'))

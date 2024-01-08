@@ -51,3 +51,13 @@ hid16c0 = {
     }
 # https://slomkowski.eu/tutorials/eavesdropping-usb-and-writing-driver-in-python/
 
+abcd = {
+        'name': 'Custom Arduino ABCD',
+        'channel':
+            [
+                {'on': b'A', 'off': b'a'},
+                {'on': b'B', 'off': b'b'},
+                {'on': b'C', 'off': b'c'},
+                {'on': b'D', 'off': b'd'}
+            ]
+    }
