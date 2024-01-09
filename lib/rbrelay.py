@@ -23,6 +23,9 @@ except ModuleNotFoundError as error:
 from lib.rbrelayconfig import ch340, pl2303, ft232r, hid16c0, abcd
 
 class USBRelay():
+    def __init__(self):
+        pass
+    
     def onoff(self, w, delay=0.5, count=1, ch=0, relayOn=False):
         if relayOn: 
             self.off()
@@ -33,18 +36,18 @@ class USBRelay():
         self.on()
         w.after(int(delay*1000), self.onoff, w, delay, count, ch, True)
                         
-    def flashon(self, w, duration=5, onfor=0.4, offfor=0.4, ch=0):
+    def flashon(self, w, ch=0, onfor=0.4, offfor=0.4): #at present onfor and offfor are not in the user config
         self.flashactive = True
         self.__flash(w, onfor, offfor, ch)
-        w.after(int(duration*1000), self.flashoff, self)
         
     def flashoff(self):
-        self.flashactive = False
+        self.flashactive = False #I suppose flashactive could be made channel-specific?
+        #maybe an array with a boolean value for each channel?
             
     def __flash(self, w, onfor, offfor, ch):
         if not self.flashactive: return
         self.onoff(w, onfor, 1, ch)
-        w.after(int((onfor+offfor)*1000), self.__flash, self, w, onfor, offfor, ch)
+        w.after(int((onfor+offfor)*1000), self.__flash, w, onfor, offfor, ch)
 
 class USBSerialRelay(USBRelay):       	
     def __init__(self, port='/dev/ttyUSB0', driver='ch340', rate=9600):
@@ -54,16 +57,18 @@ class USBSerialRelay(USBRelay):
             self.configure(driver)
             self.__open()
             self.initialiseDevice()
-            print('opened port ', port, ' with driver ', driver, ' at rate ', rate)
+            if self.active: print('opened serial port ', port, ' with driver ', driver, ' at rate ', rate)
+            else: print('serial port ', port, ' not opened')
         except:
             self.active = False
+            
+        super().__init__()
         
     def __del__(self):
         self.__close()
         
     def configure(self, driverName):
         self.driverName = driverName
-        #SERIAL
         if driverName == 'ch340': self.driver = ch340
         if driverName == 'pl2303': self.driver = pl2303
         if driverName == 'ft232r': self.driver = ft232r
@@ -76,7 +81,7 @@ class USBSerialRelay(USBRelay):
             self.connection.baudrate = self.rate
             self.connection.port = self.port
             self.driver = self.driver
-            self.connection.open()
+            self.connection.open() #the Arduinos take about 2s to initialise
         except:
             self.active = False
         
@@ -119,6 +124,8 @@ class USBHIDRelay(USBRelay):
         except Exception as error:
             print(error)
             self.active = False
+        
+        super().__init__()
             
     def __del__(self):
         self.__close()
@@ -135,7 +142,7 @@ class USBHIDRelay(USBRelay):
             self.active = False
     
     def __close(self):
-        pass
+        if self.active: self.h.close()
     
     def on(self, ch=0):
         if self.active: self.h.write(self.driver['channel'][ch]['on'])
