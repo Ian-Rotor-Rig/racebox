@@ -86,7 +86,7 @@ class ResultsInterface():
         
         #define start time
         startMs = cp['startHour'] * MSEC_IN_HOUR + cp['startMinute'] * MSEC_IN_MINUTE
-        print('start ms ', startMs)
+        # print('start ms ', startMs)
         
         #remove boats not in this race
         for i in finishData.copy():
@@ -114,6 +114,7 @@ class ResultsInterface():
         }
     
     def editEntry(self, i):
+        return
         print('test', i)
         self.editEntryId.set(value=i)
         self.setMainAreaVisible(False)
