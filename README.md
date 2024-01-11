@@ -2,7 +2,8 @@
 Automated race signals and easy finish timing for dinghy racing
 
 * Provides a connection to USB relays in order to control a horn system
-* Supports 10-5-Go, 5-4-1-Go and 3-2-1-Go start sequences
+* Supports 10-5-Go, 5-4-1-Go and 3-2-1-Go start hooter sequences
+* Uses the second relay channel for light sequences
 * Has a simple way to record finishes on the "Finish Times" tab
 
 Screenshots and more details are over at the [Rotor-Rig.com website](https://www.rotor-rig.com/racebox)
