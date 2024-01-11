@@ -27,7 +27,7 @@ for the sketch that works with the ABCD commands that Racebox uses.
 
 ## Configuration File
 The configuration file **rbconfig.ini** is created when the program is started.\
-This used to adjust defaults and settings
+This is used to adjust defaults and settings
 
 ## Running Racebox
 Once installed Racebox is run like this:\
