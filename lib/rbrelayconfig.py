@@ -51,3 +51,17 @@ hid16c0 = {
     }
 # https://slomkowski.eu/tutorials/eavesdropping-usb-and-writing-driver-in-python/
 
+# for Arduinos/other microcontrollers use an arbitrary set of commands
+# sent over the USB link. The microcontroller must be setup to respond to these commands
+# but this code exists in the Rotor-Rig Arduino repo
+# https://github.com/rotor-rig/arduino/tree/main/serial/relay-serial.cpp
+abcd = {
+        'name': 'Custom Arduino ABCD',
+        'channel':
+            [
+                {'on': b'A', 'off': b'a'},
+                {'on': b'B', 'off': b'b'},
+                {'on': b'C', 'off': b'c'},
+                {'on': b'D', 'off': b'd'}
+            ]
+    }
