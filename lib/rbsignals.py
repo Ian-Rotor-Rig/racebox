@@ -24,7 +24,7 @@ class SignalsInterface:
 	SIGNAL_MAX_AGE = 1500 #ms beyond this a signal is too late to be used
 	COUNTDOWN_PRECISION = 500 #ms -- how often the time is checked
  
-	LIGHTS_CHANNEL = 1
+	LIGHTS_CHANNEL = 1 # relay channel for the lights - the hooter is on 0 but the system defaults to 0 anyway
  
 	def __init__(self, fControl: ttk.Frame, relay):
 
@@ -32,7 +32,8 @@ class SignalsInterface:
 		self.relay = relay
 		self.config = RaceboxConfig()
 		self.on2Off = float(self.config.get('Signals', 'defaultOn2Off'))
-		self.on2offLights = float(self.config.get('Lights', 'defaultOn2Off'))
+		self.flashOnFor = float(self.config.get('Lights', 'flashonfor'))
+		self.flashOffFor = float(self.config.get('Lights', 'flashofffor'))
 
 		#create internal frames
 		fMain = Frame(fControl)
@@ -79,15 +80,11 @@ class SignalsInterface:
 	def __countdown(self):
 		if not self.relay.active: print('no active relay')
 		signalsConfig = self.__getSignalsConfig()
-		# [signals, starts, lightsOn, lightsFlash] = self.__getSignalList(signalsConfig)
 		signalsList = self.__getSignalList(signalsConfig)
-		# self.__countdownLoop(signals, starts, len(starts), signalsConfig['name'])
 		self.__countdownLoop(signalsList, signalsConfig)
    
-	# def __countdownLoop(self, signals, starts, startCount, seqName):
 	def __countdownLoop(self, signalsList, signalsConfig):
 		if not self.countdownActive: return
-		# startCount = len(signalsList['starts'])
 		signals = signalsList['signals']
 		starts = signalsList['starts']
 		lights = signalsList['lights']
@@ -100,41 +97,36 @@ class SignalsInterface:
 			if chk == SignalsInterface.SIGNAL_NOW:
 				self.relay.onoff(self.fCountdown, self.on2Off) #sound the hooter
 				if signals[0] == starts[0]: #is this a start?
-					self.relay.flashoff() #turn off any flashing lights
-					self.relay.off(SignalsInterface.LIGHTS_CHANNEL) #turn off any lights
+					self.relay.flashoff(SignalsInterface.LIGHTS_CHANNEL) #turn off flashing lights
+					self.relay.off(SignalsInterface.LIGHTS_CHANNEL) #turn off lights
 			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
 				if signals[0] == starts[0]: starts.pop(0)
 				signals.pop(0)
     
-		# is each light/flash time still valid? should the light be changed now?
+		# is each light time still valid? should the light be changed now?
 		if len(lights) > 0:
 			tooLate = lights[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
 			chk = self.__checkNextSignal(lights[0], tooLate)
 			if chk == SignalsInterface.SIGNAL_NOW:
-				print('light on')
 				self.relay.on(SignalsInterface.LIGHTS_CHANNEL)
 			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
 				lights.pop(0)
 
+		# is each flash time still valid? should the flash be changed now?
 		if len(flash) > 0:
 			tooLate = flash[0] + timedelta(milliseconds=SignalsInterface.SIGNAL_MAX_AGE)
 			chk = self.__checkNextSignal(flash[0], tooLate)
 			if chk == SignalsInterface.SIGNAL_NOW:
-				print('flash on')
 				self.relay.off(SignalsInterface.LIGHTS_CHANNEL) #turn off any lights
-				self.relay.flashon(self.fCountdown, SignalsInterface.LIGHTS_CHANNEL)
+				self.relay.flashon(self.fCountdown, SignalsInterface.LIGHTS_CHANNEL, self.flashOnFor, self.flashOffFor)
 			if chk == SignalsInterface.SIGNAL_OLD or chk == SignalsInterface.SIGNAL_NOW:
 				flash.pop(0)
           
 		if self.configChange:
 			signalsConfig = self.__getSignalsConfig()
-			# [signals, starts, lightsOn, lightsFlash] = self.__getSignalList(signalsConfig)		
 			signalsList = self.__getSignalList(signalsConfig)
-			# startCount = len(starts)	
 			self.configChange = False		
-		# self.__updateCountdownDisplay(signals, starts, startCount, seqName)
 		self.__updateCountdownDisplay(signalsList, signalsConfig)
-		# self.fCountdown.after(SignalsInterface.COUNTDOWN_PRECISION, self.__countdownLoop, signals, starts, startCount, seqName)
 		self.fCountdown.after(SignalsInterface.COUNTDOWN_PRECISION, self.__countdownLoop, signalsList, signalsConfig)
   
 	def __checkNextSignal(self, signal, tooLate):
@@ -166,9 +158,8 @@ class SignalsInterface:
 			if item['name'] == config['name']: break
 		if sequenceIndex == -1: return []
 
+		#which lights seq is selected in the interface?
 		lightsSeqIndex = self.__getLightSequenceIndex()
-		#for lightsSeqIndex, item in enumerate(SignalsInterface.sequenceListLights):
-			#if item['name'] == config['nameLights']: break
   
 		#define the returned lists
 		signalList = []
@@ -204,10 +195,8 @@ class SignalsInterface:
 			currentStart = currentStart + timedelta(minutes=startInterval)
    
 		# finished
-		# print ({'signals': signalList, 'starts': startList, 'lights': lightsOnList, 'flash': lightsFlashList})
 		return {'signals': signalList, 'starts': startList, 'lights': lightsOnList, 'flash': lightsFlashList}
 
-	#def __updateCountdownDisplay(self, signals, starts, startCount, seqName):
 	def __updateCountdownDisplay(self, signalsList, signalsConfig):
 		starts = signalsList['starts']
 		signals = signalsList['signals']
@@ -238,6 +227,7 @@ class SignalsInterface:
 		self.startsCount.set(str(currentStarts+1))
 		self.configChange = True
       
+    #draw the interface for the countdown
 	def __initCountdownInterface(self, f: ttk.Frame):
 		#grid options
 		f.rowconfigure(0, minsize=50)

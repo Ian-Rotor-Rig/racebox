@@ -24,28 +24,27 @@ from lib.rbrelayconfig import ch340, pl2303, ft232r, hid16c0, abcd
 
 class USBRelay():
     def __init__(self):
-        pass
+        self.flashactive = [False, False, False, False] #4 channels
     
     def onoff(self, w, delay=0.5, count=1, ch=0, relayOn=False):
         if relayOn: 
-            self.off()
+            self.off(ch)
             w.after(int(delay*1500), self.onoff, w, delay, count, ch, False) # between multiple signals if count > 1
             return
         if count < 1: return
         count -= 1
-        self.on()
+        self.on(ch)
         w.after(int(delay*1000), self.onoff, w, delay, count, ch, True)
                         
     def flashon(self, w, ch=0, onfor=0.4, offfor=0.4): #at present onfor and offfor are not in the user config
-        self.flashactive = True
+        self.flashactive[ch] = True
         self.__flash(w, onfor, offfor, ch)
         
-    def flashoff(self):
-        self.flashactive = False #I suppose flashactive could be made channel-specific?
-        #maybe an array with a boolean value for each channel?
+    def flashoff(self, ch=0):
+        self.flashactive[ch] = False
             
     def __flash(self, w, onfor, offfor, ch):
-        if not self.flashactive: return
+        if not self.flashactive[ch]: return
         self.onoff(w, onfor, 1, ch)
         w.after(int((onfor+offfor)*1000), self.__flash, w, onfor, offfor, ch)
 
@@ -82,6 +81,7 @@ class USBSerialRelay(USBRelay):
             self.connection.port = self.port
             self.driver = self.driver
             self.connection.open() #the Arduinos take about 2s to initialise
+            # so if you checked self.connection.is_open now it would be false
         except:
             self.active = False
         
